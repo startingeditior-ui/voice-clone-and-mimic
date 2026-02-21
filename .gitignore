@@ -1,0 +1,32 @@
+# Virtual Environment
+venv/
+rvc_env/
+
+# Audio files (large files - avoid pushing to GitHub)
+*.wav
+*.mp3
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# YourTTS / RVC model weights (usually large)
+*.pth
+*.pt
+*.bin
+*.ckpt
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# VS Code
+.vscode/
+
+# Logs
+*.log
+
+Retrieval-based-Voice-Conversion-WebUI/
+YourTTS/
