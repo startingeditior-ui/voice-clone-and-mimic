@@ -1,35 +1,61 @@
-# Virtual Environment
+# ──────────────────────────────────────────────
+# Virtual Environments (never commit these)
+# ──────────────────────────────────────────────
 venv/
 rvc_env/
 
-# Audio files (large files - avoid pushing to GitHub)
+# ──────────────────────────────────────────────
+# Audio files (large binary files)
+# ──────────────────────────────────────────────
+input/*
+output/*
+!input/.gitkeep
+!output/.gitkeep
 *.wav
 *.mp3
 
+# ──────────────────────────────────────────────
 # Python cache
+# ──────────────────────────────────────────────
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
+*.pyi
 
-# YourTTS / RVC model weights (usually large)
+# ──────────────────────────────────────────────
+# ML Model weights (large binary files)
+# ──────────────────────────────────────────────
 *.pth
 *.pt
 *.bin
 *.ckpt
 
-# OS files
-.DS_Store
-Thumbs.db
-
-# VS Code
-.vscode/
-
-# Logs
-*.log
-
+# ──────────────────────────────────────────────
+# External sub-repos / downloaded libraries
+# ──────────────────────────────────────────────
 Retrieval-based-Voice-Conversion-WebUI/
 YourTTS/
-infer-web.pyi
+
+# ──────────────────────────────────────────────
+# Log & debug files
+# ──────────────────────────────────────────────
+*.log
+*.txt
+debug_log.txt
+server_log.txt
+rvc_test_traceback.txt
+rvc_env_packages.txt
 rvc_requirements_locked.txt
-templates/
+
+# ──────────────────────────────────────────────
+# Test audio artifacts
+# ──────────────────────────────────────────────
+test_input.wav
+
+# ──────────────────────────────────────────────
+# OS & editor files
+# ──────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+.vscode/

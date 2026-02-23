@@ -1,5 +1,5 @@
-from TTS.api import TTS
 import os
+from TTS.api import TTS
 
 # Workaround for lazy-loading ModuleNotFoundError in some environments
 try:
@@ -8,7 +8,10 @@ try:
 except ImportError:
     pass
 
-os.makedirs("output", exist_ok=True)
+# Resolve output directory relative to project root
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+OUTPUT_DIR = os.path.join(PROJECT_ROOT, "output")
+os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 tts = TTS("tts_models/multilingual/multi-dataset/xtts_v2")
 
@@ -16,12 +19,15 @@ ACCENTS = {
     "neutral": "en",
     "american": "en",
     "british": "en",
-    "indian": "en"  
+    "indian": "en"
 }
 
 TONES = ["calm", "energetic", "dramatic"]
 
-def synthesize(text, speaker_wav, accent="neutral", tone="calm", output_path="output/xtts_output.wav"):
+def synthesize(text, speaker_wav, accent="neutral", tone="calm", output_path=None):
+    if output_path is None:
+        output_path = os.path.join(OUTPUT_DIR, "xtts_output.wav")
+
     language_code = ACCENTS.get(accent.lower(), "en")
     if accent.lower() == "indian":
         print("⚠ Indian English accent not natively supported, using neutral English.")

@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VoiceQuest | Professional Voice Cloning</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --bg: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --text-main: #f8fafc;
+            --text-dim: #94a3b8;
+            --accent-glow: rgba(99, 102, 241, 0.2);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg);
+            background-image:
+                radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(139, 92, 246, 0.15) 0px, transparent 50%);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            padding: 3rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary), #8b5cf6);
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(to right, #fff, #94a3b8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        p.subtitle {
+            color: var(--text-dim);
+            margin-bottom: 2.5rem;
+            font-weight: 300;
+        }
+
+        .upload-section {
+            border: 2px dashed rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 2rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            margin-bottom: 2rem;
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .upload-section:hover {
+            border-color: var(--primary);
+            background: rgba(99, 102, 241, 0.05);
+        }
+
+        .upload-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            display: block;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .control-group {
+            text-align: left;
+        }
+
+        label {
+            display: block;
+            font-size: 0.8rem;
+            color: var(--text-dim);
+            margin-bottom: 0.5rem;
+            margin-left: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        select {
+            width: 100%;
+            background: rgba(15, 23, 42, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 0.75rem;
+            color: white;
+            outline: none;
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+
+        select:focus {
+            border-color: var(--primary);
+        }
+
+        button.btn-primary {
+            width: 100%;
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 1rem;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px var(--accent-glow);
+        }
+
+        button.btn-primary:hover:not(:disabled) {
+            background: var(--primary-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px var(--accent-glow);
+        }
+
+        button.btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .result-section {
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            display: none;
+        }
+
+        .result-section.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        audio {
+            width: 100%;
+            margin-top: 1rem;
+            border-radius: 8px;
+            filter: invert(100%) hue-rotate(180deg) brightness(1.5);
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .loading-spinner {
+            display: none;
+            margin: 1rem auto;
+            width: 30px;
+            height: 30px;
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            border-top-color: var(--primary);
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .status-msg {
+            margin-top: 1rem;
+            font-size: 0.9rem;
+            color: var(--text-dim);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <h1>VoiceQuest</h1>
+        <p class="subtitle">Clone your voice with precision and style</p>
+
+        <!-- Mode Toggle -->
+        <div
+            style="display: flex; background: rgba(15, 23, 42, 0.5); border-radius: 12px; padding: 4px; margin-bottom: 2rem;">
+            <button onclick="setMode('tts')" id="ttsToggle"
+                style="flex: 1; padding: 0.75rem; border: none; border-radius: 8px; cursor: pointer; transition: 0.3s; background: var(--primary); color: white;">Text-to-Speech</button>
+            <button onclick="setMode('s2s')" id="s2sToggle"
+                style="flex: 1; padding: 0.75rem; border: none; border-radius: 8px; cursor: pointer; transition: 0.3s; background: transparent; color: var(--text-dim);">Mimicry
+                Mode (S2S)</button>
+        </div>
+
+        <!-- Target Voice Upload (Always needed) -->
+        <div class="upload-section" onclick="document.getElementById('voiceInput').click()">
+            <span class="upload-icon">👤</span>
+            <span id="fileName">Target Voice (to clone)</span>
+            <input type="file" id="voiceInput" accept="audio/*" onchange="handleFileSelect(event)">
+        </div>
+
+        <!-- Performance Upload (S2S only) -->
+        <div id="performanceSection" class="upload-section" onclick="document.getElementById('perfInput').click()"
+            style="display: none; border-color: #8b5cf6;">
+            <span class="upload-icon">🎙️</span>
+            <span id="perfName">Your Performance (for accent/tone)</span>
+            <input type="file" id="perfInput" accept="audio/*" onchange="handlePerfSelect(event)">
+        </div>
+
+        <div class="control-group" id="ttsInputGroup" style="margin-bottom: 2rem;">
+            <label>Content to Speak (Optional)</label>
+            <textarea id="customText" placeholder="If left empty, we'll transcribe the target audio for you..."
+                style="width: 100%; height: 100px; background: rgba(15, 23, 42, 0.5); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; padding: 1rem; color: white; resize: none;"></textarea>
+        </div>
+
+        <div class="controls" id="ttsControls">
+            <div class="control-group">
+                <label>Accent</label>
+                <select id="accent">
+                    <option value="neutral">Neutral</option>
+                    <option value="american">American</option>
+                    <option value="british">British</option>
+                    <option value="indian">Indian</option>
+                </select>
+            </div>
+            <div class="control-group">
+                <label>Tone</label>
+                <select id="tone">
+                    <option value="calm">Calm</option>
+                    <option value="energetic">Energetic</option>
+                    <option value="dramatic">Dramatic</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="controls" id="s2sControls" style="display: none; grid-template-columns: 1fr 1fr;">
+            <div
+                style="grid-column: span 2; margin-bottom: 1rem; padding: 0.75rem; background: rgba(99, 102, 241, 0.1); border-radius: 8px; border-left: 4px solid var(--primary); font-size: 0.85rem; color: var(--text-dim); text-align: left;">
+                <strong>Note:</strong> Mimicry mode requires a trained RVC model (.pth) to be present on the server.
+            </div>
+            <div class="control-group">
+                <label>Pitch Shift</label>
+                <select id="pitchShift">
+                    <option value="-12">-1 Octave</option>
+                    <option value="0" selected>Neutral</option>
+                    <option value="12">+1 Octave</option>
+                </select>
+            </div>
+            <div class="control-group">
+                <label>Mimicry Intensity</label>
+                <select id="indexRate">
+                    <option value="0.5">Natural</option>
+                    <option value="0.75" selected>High (Recommended)</option>
+                    <option value="1.0">Maximum</option>
+                </select>
+            </div>
+        </div>
+
+        <button class="btn-primary" id="processBtn" onclick="processVoice()" style="margin-top: 2rem;">Clone
+            Voice</button>
+
+        <div class="loading-spinner" id="loader"></div>
+        <p class="status-msg" id="status"></p>
+
+        <div class="result-section" id="result">
+            <p id="resultLabel" style="margin-bottom: 1rem; font-weight: 600;">Success! Listen to your clone:</p>
+            <audio id="audioPlayer" controls></audio>
+            <div id="transcribedText"
+                style="margin-top: 1rem; font-style: italic; color: var(--text-dim); font-size: 0.9rem;"></div>
+        </div>
+    </div>
+
+
+    <script>
+        // Check if opened via file protocol
+        if (window.location.protocol === 'file:') {
+            alert("Warning: You opened the file directly from disk. Please access the server at http://localhost:8000 for it to work properly.");
+            document.body.innerHTML = `
+                <div style="background: #0f172a; color: white; height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: sans-serif; padding: 20px; text-align: center;">
+                    <h1 style="color: #ef4444;">⚠️ Connection Error</h1>
+                    <p style="margin: 20px 0; font-size: 1.2rem;">You opened this file directly from your computer folders.</p>
+                    <p style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px;">
+                        To use VoiceQuest, please enter this address in your browser:<br>
+                        <strong style="color: #6366f1; font-size: 1.5rem;">http://localhost:8000</strong>
+                    </p>
+                    <p style="margin-top: 20px; color: #94a3b8;">Make sure your server (python app.py) is running in the background.</p>
+                </div>
+            `;
+        }
+
+        let selectedFile = null;
+        let performanceFile = null;
+        let mode = 'tts';
+
+        function setMode(newMode) {
+            mode = newMode;
+            const ttsToggle = document.getElementById('ttsToggle');
+            const s2sToggle = document.getElementById('s2sToggle');
+            const performanceSection = document.getElementById('performanceSection');
+            const ttsInputGroup = document.getElementById('ttsInputGroup');
+            const ttsControls = document.getElementById('ttsControls');
+            const s2sControls = document.getElementById('s2sControls');
+            const processBtn = document.getElementById('processBtn');
+            const resultLabel = document.getElementById('resultLabel');
+
+            if (mode === 'tts') {
+                ttsToggle.style.background = 'var(--primary)';
+                ttsToggle.style.color = 'white';
+                s2sToggle.style.background = 'transparent';
+                s2sToggle.style.color = 'var(--text-dim)';
+
+                performanceSection.style.display = 'none';
+                ttsInputGroup.style.display = 'block';
+                ttsControls.style.display = 'grid';
+                s2sControls.style.display = 'none';
+                processBtn.textContent = 'Clone Voice';
+                resultLabel.textContent = 'Success! Listen to your clone:';
+            } else {
+                s2sToggle.style.background = 'var(--primary)';
+                s2sToggle.style.color = 'white';
+                ttsToggle.style.background = 'transparent';
+                ttsToggle.style.color = 'var(--text-dim)';
+
+                performanceSection.style.display = 'block';
+                ttsInputGroup.style.display = 'none';
+                ttsControls.style.display = 'none';
+                s2sControls.style.display = 'grid';
+                processBtn.textContent = 'Mimic Accent & Tone';
+                resultLabel.textContent = 'Success! Listen to your performance clone:';
+            }
+        }
+
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                selectedFile = file;
+                document.getElementById('fileName').textContent = file.name;
+            }
+        }
+
+        function handlePerfSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                performanceFile = file;
+                document.getElementById('perfName').textContent = file.name;
+            }
+        }
+
+        async function processVoice() {
+            if (!selectedFile) {
+                alert("Please select a target voice audio file first.");
+                return;
+            }
+
+            if (mode === 's2s' && !performanceFile) {
+                alert("Please select a performance audio file for mimicry.");
+                return;
+            }
+
+            const btn = document.getElementById('processBtn');
+            const loader = document.getElementById('loader');
+            const status = document.getElementById('status');
+            const result = document.getElementById('result');
+            const audioPlayer = document.getElementById('audioPlayer');
+            const transcribedText = document.getElementById('transcribedText');
+
+            btn.disabled = true;
+            loader.style.display = 'block';
+            status.textContent = mode === 'tts' ? 'Transcribing and synthesizing...' : 'Converting voice while preserving accent...';
+            result.classList.remove('active');
+
+            const formData = new FormData();
+            let endpoint = '/process-voice';
+
+            if (mode === 'tts') {
+                formData.append('file', selectedFile);
+                formData.append('accent', document.getElementById('accent').value);
+                formData.append('tone', document.getElementById('tone').value);
+                formData.append('custom_text', document.getElementById('customText').value);
+            } else {
+                endpoint = '/convert-voice';
+                formData.append('performance_file', performanceFile);
+                formData.append('target_voice_file', selectedFile);
+                formData.append('pitch_shift', document.getElementById('pitchShift').value);
+                formData.append('index_rate', document.getElementById('indexRate').value);
+            }
+
+            try {
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.detail || 'Processing failed');
+                }
+
+                const data = await response.json();
+
+                // The API returns /audio/output/{filename}
+                // But we mounted it at /output (or /static/output)
+                const audioUrl = data.output_url.replace('/audio/output/', '/static/output/');
+
+                audioPlayer.src = audioUrl;
+                transcribedText.textContent = data.text ? '"' + data.text + '"' : (data.model_used ? 'Using model: ' + data.model_used : '');
+                result.classList.add('active');
+                status.textContent = 'Done!';
+            } catch (error) {
+                console.error(error);
+                status.textContent = 'Error: ' + error.message;
+            } finally {
+                btn.disabled = false;
+                loader.style.display = 'none';
+            }
+        }
+    </script>
+
+</body>
+
+</html>
