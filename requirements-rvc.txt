@@ -1,0 +1,26 @@
+# RVC environment dependencies
+# Install these in a SEPARATE virtual environment (rvc_env)
+#
+# Usage:
+#   python -m venv rvc_env
+#   rvc_env\Scripts\activate
+#   pip install -r requirements-rvc.txt
+
+torch>=2.1.0
+torchaudio>=2.1.0
+
+# RVC core
+fairseq
+faiss-cpu
+
+# Audio processing
+librosa>=0.10.0
+soundfile>=0.12.1
+ffmpeg-python
+
+# Transformers
+transformers>=4.38.0
+
+# Utilities
+numpy<2.0
+scipy>=1.11.0

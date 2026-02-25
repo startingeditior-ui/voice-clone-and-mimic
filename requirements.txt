@@ -1,0 +1,21 @@
+# Core web server
+fastapi>=0.110.0
+uvicorn[standard]>=0.29.0
+
+# TTS / Voice Synthesis
+TTS>=0.22.0
+
+# Transcription
+faster-whisper>=1.0.0
+
+# Audio I/O
+sounddevice>=0.4.6
+scipy>=1.11.0
+soundfile>=0.12.1
+
+# ML Backend
+torch>=2.1.0
+torchaudio>=2.1.0
+
+# Transformers (required by Coqui TTS)
+transformers>=4.38.0

@@ -1,62 +1,112 @@
-# ──────────────────────────────────────────────
-# Virtual Environments (never commit these)
-# ──────────────────────────────────────────────
+# ──────────────────────────────────────────────────────────────
+# Voice Clone Project — .gitignore
+# ──────────────────────────────────────────────────────────────
+
+# ── Python environments ────────────────────────────────────────
 venv/
 rvc_env/
+.venv/
+env/
 
-# ──────────────────────────────────────────────
-# Audio files (large binary files)
-# ──────────────────────────────────────────────
+# ── Python cache & bytecode ────────────────────────────────────
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pyz
+.Python
+
+# ── Python packaging / distribution ───────────────────────────
+*.egg
+*.egg-info/
+dist/
+build/
+eggs/
+parts/
+var/
+sdist/
+develop-eggs/
+.installed.cfg
+lib/
+lib64/
+wheels/
+
+# ── Type stubs (auto-generated, not project source) ───────────
+*.pyi
+
+# ── Jupyter Notebooks (strip output before tracking) ──────────
+.ipynb_checkpoints/
+*.ipynb
+
+# ── Testing & coverage ────────────────────────────────────────
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+.tox/
+nosetests.xml
+test-results/
+
+# ── ML model weights (large binary files — use Git LFS instead)
+*.pth
+*.pt
+*.bin
+*.ckpt
+*.safetensors
+*.onnx
+*.h5
+
+# ── Audio / video files ────────────────────────────────────────
 input/*
 output/*
 !input/.gitkeep
 !output/.gitkeep
 *.wav
 *.mp3
+*.ogg
+*.flac
+*.aac
+*.mp4
+*.webm
 
-# ──────────────────────────────────────────────
-# Python cache
-# ──────────────────────────────────────────────
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-*.pyi
-
-# ──────────────────────────────────────────────
-# ML Model weights (large binary files)
-# ──────────────────────────────────────────────
-*.pth
-*.pt
-*.bin
-*.ckpt
-
-# ──────────────────────────────────────────────
-# External sub-repos / downloaded libraries
-# ──────────────────────────────────────────────
-Retrieval-based-Voice-Conversion-WebUI/
-YourTTS/
-
-# ──────────────────────────────────────────────
-# Log & debug files
-# ──────────────────────────────────────────────
+# ── Log files ─────────────────────────────────────────────────
 *.log
-*.txt
 debug_log.txt
 server_log.txt
 rvc_test_traceback.txt
 rvc_env_packages.txt
 rvc_requirements_locked.txt
 
-# ──────────────────────────────────────────────
-# Test audio artifacts
-# ──────────────────────────────────────────────
-test_input.wav
+# ── Temporary / scratch files ──────────────────────────────────
+tmp/
+temp/
+*.tmp
+*.bak
+*.swp
+*.swo
+*~
 
-# ──────────────────────────────────────────────
-# OS & editor files
-# ──────────────────────────────────────────────
+# ── External sub-repos / large downloaded libraries ───────────
+Retrieval-based-Voice-Conversion-WebUI/
+YourTTS/
+
+# ── Docker (local overrides only — core files ARE tracked) ─────
+docker-compose.override.yml
+docker-compose.local.yml
+.env
+.env.*
+!.env.example
+
+# ── OS & editor files ─────────────────────────────────────────
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
 Thumbs.db
+desktop.ini
 .vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
 .agent/

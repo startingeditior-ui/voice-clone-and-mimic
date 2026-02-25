@@ -1,0 +1,34 @@
+services:
+  voice-clone:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: voice-clone:latest
+    container_name: voice-clone-app
+    ports:
+      - "8000:8000"
+    volumes:
+      # Bind-mount input/output so files are accessible on the host
+      - ./input:/app/input
+      - ./output:/app/output
+      # Named volumes for model caching (survives container restarts)
+      - tts-models:/root/.local/share/tts
+      - whisper-models:/root/.cache/huggingface
+    environment:
+      - PYTHONUNBUFFERED=1
+      - CUDA_VISIBLE_DEVICES=0
+    # GPU support — requires NVIDIA Container Toolkit + WSL2 on Windows
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [ gpu ]
+    restart: unless-stopped
+
+volumes:
+  tts-models:
+    driver: local
+  whisper-models:
+    driver: local

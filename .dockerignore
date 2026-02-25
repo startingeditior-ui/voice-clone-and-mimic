@@ -1,0 +1,43 @@
+# ── Python environments (never copy into image) ────────────────────────────────
+venv/
+rvc_env/
+.venv/
+env/
+
+# ── Heavy submodules (excluded — not needed for TTS Clone / Smart Mimic) ───────
+Retrieval-based-Voice-Conversion-WebUI/
+YourTTS/
+
+# ── Git & IDE ──────────────────────────────────────────────────────────────────
+.git/
+.gitignore
+.vscode/
+.agent/
+
+# ── Python cache ───────────────────────────────────────────────────────────────
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+dist/
+build/
+*.egg
+
+# ── Tests (not needed at runtime) ─────────────────────────────────────────────
+tests/
+
+# ── Docs & misc ───────────────────────────────────────────────────────────────
+README.md
+*.md
+*.txt
+!requirements.txt
+
+# ── Input/output files (mounted as volumes at runtime) ────────────────────────
+input/
+output/
+
+# ── OS files ──────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
