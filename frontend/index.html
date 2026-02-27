@@ -5,1041 +5,2022 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>VoiceQuest | Professional Voice Cloning</title>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <meta name="description"
+        content="Clone any voice with AI — accent, tone, and identity transfer using XTTS v2 and Faster-Whisper.">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap"
+        rel="stylesheet">
     <style>
         :root {
-            --primary: #6366f1;
-            --primary-hover: #4f46e5;
-            --bg: #0f172a;
-            --card-bg: rgba(30, 41, 59, 0.7);
-            --text-main: #f8fafc;
-            --text-dim: #94a3b8;
-            --accent-glow: rgba(99, 102, 241, 0.2);
+            --p: #6366f1;
+            --p2: #4f46e5;
+            --s: #a855f7;
+            --c: #06b6d4;
+            --bg: #07091a;
+            --sur: #0d1226;
+            --sur2: #141b35;
+            --border: rgba(255, 255, 255, 0.07);
+            --border2: rgba(99, 102, 241, 0.3);
+            --txt: #f1f5f9;
+            --dim: #64748b;
+            --dim2: #94a3b8;
             --green: #22c55e;
-            --purple: #8b5cf6;
+            --red: #ef4444;
+            --glow: rgba(99, 102, 241, 0.25);
+            --glow2: rgba(168, 85, 247, 0.2);
         }
 
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Outfit', sans-serif;
+            font-family: 'Outfit', sans-serif
         }
 
+        html,
         body {
-            background-color: var(--bg);
-            background-image:
-                radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
-                radial-gradient(at 100% 100%, rgba(139, 92, 246, 0.15) 0px, transparent 50%);
-            color: var(--text-main);
-            min-height: 100vh;
+            height: 100%;
+            background: var(--bg);
+            color: var(--txt);
+            overflow-x: hidden
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 0;
+            background:
+                radial-gradient(ellipse 80% 60% at 10% 0%, rgba(99, 102, 241, 0.12) 0%, transparent 60%),
+                radial-gradient(ellipse 60% 50% at 90% 100%, rgba(168, 85, 247, 0.10) 0%, transparent 60%),
+                radial-gradient(ellipse 40% 40% at 50% 50%, rgba(6, 182, 212, 0.05) 0%, transparent 70%);
+        }
+
+        /* ── APP SHELL ── */
+        .app {
+            display: flex;
+            height: 100vh;
+            position: relative;
+            z-index: 1
+        }
+
+        /* ── SIDEBAR ── */
+        .sidebar {
+            width: 280px;
+            min-width: 280px;
+            background: var(--sur);
+            border-right: 1px solid var(--border);
             display: flex;
             flex-direction: column;
-            align-items: center;
-            justify-content: flex-start;
-            padding: 2rem;
-        }
-
-        .container {
-            width: 100%;
-            max-width: 640px;
-            background: var(--card-bg);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 24px;
-            padding: 3rem;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-            text-align: center;
-            position: relative;
+            padding: 0;
             overflow: hidden;
         }
 
-        .container::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-            background: linear-gradient(90deg, var(--primary), #8b5cf6);
+        .sidebar-top {
+            padding: 2rem 1.5rem 1.5rem;
+            border-bottom: 1px solid var(--border);
+            background: linear-gradient(180deg, rgba(99, 102, 241, 0.08) 0%, transparent 100%);
         }
 
-        h1 {
-            font-size: 2.5rem;
-            font-weight: 800;
-            margin-bottom: 0.5rem;
-            background: linear-gradient(to right, #fff, #94a3b8);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        p.subtitle {
-            color: var(--text-dim);
-            margin-bottom: 2.5rem;
-            font-weight: 300;
-        }
-
-        /* ── Mode Toggle ── */
-        .mode-toggle {
+        .logo {
             display: flex;
-            background: rgba(15, 23, 42, 0.5);
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 0.4rem
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
             border-radius: 12px;
-            padding: 4px;
-            margin-bottom: 2rem;
-        }
-
-        .mode-toggle button {
-            flex: 1;
-            padding: 0.75rem;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s;
-            font-size: 0.9rem;
-            font-weight: 600;
-        }
-
-        /* ── Sub-mode Pills (Smart Mimic / RVC Mimic) ── */
-        .sub-mode-bar {
-            display: none;
-            background: rgba(99, 102, 241, 0.08);
-            border: 1px solid rgba(99, 102, 241, 0.2);
-            border-radius: 10px;
-            padding: 4px;
-            margin-bottom: 1.5rem;
-        }
-
-        .sub-mode-bar.visible {
+            background: linear-gradient(135deg, var(--p), var(--s));
             display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            box-shadow: 0 4px 16px var(--glow);
+            flex-shrink: 0;
         }
 
-        .sub-mode-bar button {
-            flex: 1;
-            padding: 0.5rem 0.75rem;
-            border: none;
-            border-radius: 7px;
-            cursor: pointer;
-            transition: all 0.3s;
-            font-size: 0.82rem;
-            font-weight: 600;
-            background: transparent;
-            color: var(--text-dim);
+        .logo-text {
+            font-size: 1.4rem;
+            font-weight: 800;
+            background: linear-gradient(90deg, #fff, #a5b4fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent
         }
 
-        .sub-mode-bar button.active {
-            background: var(--primary);
-            color: white;
+        .logo-sub {
+            font-size: 0.72rem;
+            color: var(--dim);
+            letter-spacing: .06em;
+            text-transform: uppercase;
+            margin-left: 52px;
+            margin-top: -0.2rem
         }
 
-        /* ── Info Banner ── */
-        .info-banner {
-            display: none;
-            padding: 0.75rem 1rem;
-            border-radius: 10px;
-            font-size: 0.83rem;
-            color: var(--text-dim);
-            text-align: left;
-            margin-bottom: 1.5rem;
-            line-height: 1.6;
+        /* Waveform */
+        .waveform {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 3px;
+            height: 36px;
+            margin: 1.25rem 0 0.5rem
         }
 
-        .info-banner.visible {
+        .waveform span {
             display: block;
+            width: 3px;
+            border-radius: 99px;
+            background: linear-gradient(180deg, var(--p), var(--s));
+            animation: wave 1.4s ease-in-out infinite
         }
 
-        .info-banner.green {
-            background: rgba(34, 197, 94, 0.08);
-            border-left: 4px solid var(--green);
+        .waveform span:nth-child(1) {
+            height: 8px;
+            animation-delay: 0s
         }
 
-        .info-banner.purple {
-            background: rgba(139, 92, 246, 0.08);
-            border-left: 4px solid var(--purple);
+        .waveform span:nth-child(2) {
+            height: 16px;
+            animation-delay: .1s
         }
 
-        .info-banner strong {
-            color: var(--text-main);
+        .waveform span:nth-child(3) {
+            height: 24px;
+            animation-delay: .2s
         }
 
-        /* ── Upload Sections ── */
-        .upload-section {
-            border: 2px dashed rgba(255, 255, 255, 0.1);
-            border-radius: 16px;
-            padding: 1.75rem;
-            transition: all 0.3s ease;
+        .waveform span:nth-child(4) {
+            height: 32px;
+            animation-delay: .3s
+        }
+
+        .waveform span:nth-child(5) {
+            height: 24px;
+            animation-delay: .4s
+        }
+
+        .waveform span:nth-child(6) {
+            height: 16px;
+            animation-delay: .5s
+        }
+
+        .waveform span:nth-child(7) {
+            height: 24px;
+            animation-delay: .6s
+        }
+
+        .waveform span:nth-child(8) {
+            height: 32px;
+            animation-delay: .7s
+        }
+
+        .waveform span:nth-child(9) {
+            height: 24px;
+            animation-delay: .8s
+        }
+
+        .waveform span:nth-child(10) {
+            height: 16px;
+            animation-delay: .9s
+        }
+
+        .waveform span:nth-child(11) {
+            height: 8px;
+            animation-delay: 1s
+        }
+
+        @keyframes wave {
+
+            0%,
+            100% {
+                transform: scaleY(1);
+                opacity: .7
+            }
+
+            50% {
+                transform: scaleY(1.6);
+                opacity: 1
+            }
+        }
+
+        /* Nav */
+        .nav {
+            padding: 1rem 0.75rem;
+            flex: 1;
+            overflow-y: auto
+        }
+
+        .nav-label {
+            font-size: 0.68rem;
+            text-transform: uppercase;
+            letter-spacing: .1em;
+            color: var(--dim);
+            padding: 0.5rem 0.75rem 0.4rem;
+            font-weight: 600
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 0.85rem;
+            padding: 0.85rem 1rem;
+            border-radius: 12px;
             cursor: pointer;
+            transition: all .25s;
+            margin-bottom: 4px;
+            border: 1px solid transparent;
+        }
+
+        .nav-item:hover {
+            background: rgba(99, 102, 241, 0.08);
+            border-color: var(--border2)
+        }
+
+        .nav-item.active {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.18), rgba(168, 85, 247, 0.12));
+            border-color: var(--border2);
+            box-shadow: 0 4px 16px rgba(99, 102, 241, 0.15);
+        }
+
+        .nav-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            flex-shrink: 0;
+            background: rgba(255, 255, 255, 0.05);
+            transition: all .25s;
+        }
+
+        .nav-item.active .nav-icon {
+            background: linear-gradient(135deg, var(--p), var(--s));
+            box-shadow: 0 4px 12px var(--glow)
+        }
+
+        .nav-info {
+            flex: 1
+        }
+
+        .nav-title {
+            font-size: .9rem;
+            font-weight: 600;
+            color: var(--txt);
+            line-height: 1.2
+        }
+
+        .nav-desc {
+            font-size: .72rem;
+            color: var(--dim);
+            line-height: 1.3;
+            margin-top: .15rem
+        }
+
+        .nav-badge {
+            font-size: .62rem;
+            font-weight: 700;
+            letter-spacing: .04em;
+            background: linear-gradient(90deg, var(--p), var(--s));
+            color: #fff;
+            border-radius: 99px;
+            padding: 2px 7px;
+            flex-shrink: 0;
+        }
+
+        /* Sidebar footer */
+        .sidebar-footer {
+            padding: 1rem 1.5rem;
+            border-top: 1px solid var(--border);
+            font-size: .72rem;
+            color: var(--dim);
+        }
+
+        .version-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: .4rem;
+            background: rgba(99, 102, 241, 0.1);
+            border: 1px solid var(--border2);
+            border-radius: 99px;
+            padding: 4px 10px;
+            color: #a5b4fc;
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* ── MAIN ── */
+        .main {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column
+        }
+
+        /* Panel Header */
+        .panel-header {
+            padding: 2rem 2.5rem 1.5rem;
+            border-bottom: 1px solid var(--border);
+            background: linear-gradient(180deg, rgba(99, 102, 241, 0.05) 0%, transparent 100%);
+        }
+
+        .panel-title {
+            font-size: 1.5rem;
+            font-weight: 800;
+            margin-bottom: .25rem
+        }
+
+        .panel-sub {
+            font-size: .88rem;
+            color: var(--dim2)
+        }
+
+        /* Panel Body */
+        .panel-body {
+            padding: 2rem 2.5rem;
+            flex: 1
+        }
+
+        /* ── INFO BANNER ── */
+        .info-box {
+            display: flex;
+            gap: 1rem;
+            padding: 1rem 1.25rem;
+            border-radius: 14px;
+            margin-bottom: 1.75rem;
+            font-size: .84rem;
+            line-height: 1.6;
+            background: rgba(99, 102, 241, 0.07);
+            border: 1px solid rgba(99, 102, 241, 0.2);
+        }
+
+        .info-box.purple {
+            background: rgba(168, 85, 247, 0.07);
+            border-color: rgba(168, 85, 247, 0.25)
+        }
+
+        .info-box-icon {
+            font-size: 1.2rem;
+            flex-shrink: 0;
+            margin-top: .1rem
+        }
+
+        .info-box strong {
+            color: #c4b5fd
+        }
+
+        /* ── UPLOAD ZONE ── */
+        .upload-zone {
+            border: 2px dashed rgba(255, 255, 255, 0.12);
+            border-radius: 16px;
+            padding: 1.75rem 1.5rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all .25s;
             margin-bottom: 1rem;
             background: rgba(255, 255, 255, 0.02);
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 1.25rem;
         }
 
-        .upload-section:hover {
-            border-color: var(--primary);
-            background: rgba(99, 102, 241, 0.05);
+        .upload-zone:hover,
+        .upload-zone.drag-over {
+            border-color: var(--p);
+            background: rgba(99, 102, 241, 0.06);
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.08);
         }
 
-        .upload-section.perf-upload {
-            border-color: rgba(139, 92, 246, 0.35);
+        .upload-zone.perf {
+            border-color: rgba(168, 85, 247, 0.3)
         }
 
-        .upload-section.perf-upload:hover {
-            border-color: var(--purple);
-            background: rgba(139, 92, 246, 0.06);
+        .upload-zone.perf:hover,
+        .upload-zone.perf.drag-over {
+            border-color: var(--s);
+            background: rgba(168, 85, 247, 0.06);
+            box-shadow: 0 0 0 4px rgba(168, 85, 247, 0.08);
         }
 
-        .upload-icon {
-            font-size: 2rem;
-            margin-bottom: 0.5rem;
-            display: block;
+        .upload-zone.has-file {
+            border-style: solid;
+            border-color: var(--green);
+            background: rgba(34, 197, 94, 0.05)
         }
 
-        .upload-label {
-            font-size: 0.75rem;
+        .uz-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            flex-shrink: 0;
+            background: rgba(255, 255, 255, 0.05);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+            transition: all .25s;
+        }
+
+        .upload-zone:hover .uz-icon {
+            background: rgba(99, 102, 241, 0.15)
+        }
+
+        .upload-zone.perf:hover .uz-icon {
+            background: rgba(168, 85, 247, 0.15)
+        }
+
+        .upload-zone.has-file .uz-icon {
+            background: rgba(34, 197, 94, 0.15)
+        }
+
+        .uz-text {
+            text-align: left;
+            flex: 1
+        }
+
+        .uz-label {
+            font-size: .7rem;
             text-transform: uppercase;
-            letter-spacing: 0.06em;
-            color: var(--text-dim);
-            margin-bottom: 0.25rem;
+            letter-spacing: .08em;
+            color: var(--dim);
+            font-weight: 600;
+            margin-bottom: .2rem
         }
 
-        .upload-name {
-            font-size: 0.92rem;
-            color: var(--text-main);
+        .uz-name {
+            font-size: .9rem;
+            color: var(--dim2);
+            transition: color .2s
         }
 
-        input[type="file"] {
-            display: none;
+        .upload-zone.has-file .uz-name {
+            color: var(--green);
+            font-weight: 600
         }
 
-        /* ── Controls ── */
-        .controls {
+        input[type=file] {
+            display: none
+        }
+
+        /* ── DIVIDER ── */
+        .or-divider {
+            display: flex;
+            align-items: center;
+            gap: .75rem;
+            margin: .75rem 0;
+            color: var(--dim);
+            font-size: .75rem;
+            font-weight: 600
+        }
+
+        .or-divider::before,
+        .or-divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border)
+        }
+
+        /* ── CONTROLS GRID ── */
+        .ctrl-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 1rem;
-            margin-bottom: 1.5rem;
+            margin-bottom: 1.25rem
         }
 
-        .control-group {
-            text-align: left;
+        .ctrl-group {
+            display: flex;
+            flex-direction: column;
+            gap: .4rem
         }
 
-        label {
-            display: block;
-            font-size: 0.8rem;
-            color: var(--text-dim);
-            margin-bottom: 0.5rem;
-            margin-left: 0.5rem;
+        .ctrl-label {
+            font-size: .72rem;
             text-transform: uppercase;
-            letter-spacing: 0.05em;
+            letter-spacing: .07em;
+            color: var(--dim);
+            font-weight: 600;
+            padding-left: .25rem
         }
 
         select,
         textarea {
             width: 100%;
-            background: rgba(15, 23, 42, 0.5);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 12px;
-            padding: 0.75rem;
-            color: white;
+            padding: .7rem .9rem;
+            border-radius: 10px;
+            font-size: .88rem;
+            background: var(--sur2);
+            border: 1px solid var(--border);
+            color: var(--txt);
             outline: none;
             cursor: pointer;
-            transition: border-color 0.2s;
-        }
-
-        select:focus,
-        textarea:focus {
-            border-color: var(--primary);
+            transition: border-color .2s, box-shadow .2s;
+            font-family: 'Outfit', sans-serif;
+            appearance: none;
+            -webkit-appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2364748b' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right .75rem center;
+            padding-right: 2rem;
         }
 
         textarea {
             resize: none;
+            background-image: none;
+            padding-right: .9rem
         }
 
-        /* ── Speed Slider ── */
+        select:focus,
+        textarea:focus {
+            border-color: var(--p);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15)
+        }
+
+        select option {
+            background: var(--sur2);
+            color: var(--txt)
+        }
+
+        /* ── SPEED ROW ── */
         .speed-row {
             display: flex;
             align-items: center;
-            gap: 0.75rem;
-            margin-bottom: 1.25rem;
-            background: rgba(15, 23, 42, 0.4);
-            border: 1px solid rgba(255, 255, 255, 0.07);
+            gap: .85rem;
+            background: var(--sur2);
+            border: 1px solid var(--border);
             border-radius: 12px;
-            padding: 0.75rem 1rem;
+            padding: .75rem 1rem;
+            margin-bottom: 1.25rem;
         }
 
-        .speed-row label {
+        .speed-row .ctrl-label {
             margin: 0;
             white-space: nowrap;
-            flex-shrink: 0;
-            font-size: 0.78rem;
+            font-size: .72rem
         }
 
-        input[type="range"] {
+        input[type=range] {
             flex: 1;
             -webkit-appearance: none;
             height: 4px;
             border-radius: 2px;
-            background: linear-gradient(to right, var(--primary) 0%, rgba(255, 255, 255, 0.1) 0%);
             outline: none;
             cursor: pointer;
+            background: linear-gradient(to right, var(--p) 0%, rgba(255, 255, 255, .1) 0%);
         }
 
-        input[type="range"]::-webkit-slider-thumb {
+        input[type=range]::-webkit-slider-thumb {
             -webkit-appearance: none;
             width: 16px;
             height: 16px;
             border-radius: 50%;
-            background: var(--primary);
-            box-shadow: 0 0 8px rgba(99, 102, 241, 0.6);
+            background: var(--p);
             cursor: pointer;
+            box-shadow: 0 0 8px var(--glow);
         }
 
         .speed-val {
-            font-size: 0.85rem;
+            font-size: .85rem;
             font-weight: 700;
-            color: var(--primary);
-            min-width: 2.8rem;
+            color: var(--p);
+            min-width: 3rem;
             text-align: right;
+            font-family: 'JetBrains Mono', monospace
         }
 
-        /* ── Buttons ── */
-        button.btn-primary {
+        /* ── CTA BUTTON ── */
+        .btn-cta {
             width: 100%;
-            background: var(--primary);
-            color: white;
-            border: none;
             padding: 1rem;
-            border-radius: 12px;
-            font-size: 1rem;
-            font-weight: 600;
+            border: none;
+            border-radius: 14px;
             cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 12px var(--accent-glow);
-            margin-top: 1.5rem;
-        }
-
-        button.btn-primary:hover:not(:disabled) {
-            background: var(--primary-hover);
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px var(--accent-glow);
-        }
-
-        button.btn-primary:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        /* ── Steps indicator (S2S) ── */
-        .steps-row {
-            display: none;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-            margin-bottom: 1.25rem;
-            font-size: 0.8rem;
-            color: var(--text-dim);
-        }
-
-        .steps-row.visible {
-            display: flex;
-        }
-
-        .step-badge {
-            background: rgba(99, 102, 241, 0.15);
-            border: 1px solid rgba(99, 102, 241, 0.3);
-            color: var(--primary);
-            border-radius: 50%;
-            width: 22px;
-            height: 22px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            font-size: 0.72rem;
-            flex-shrink: 0;
-        }
-
-        .step-arrow {
-            color: rgba(255, 255, 255, 0.2);
             font-size: 1rem;
+            font-weight: 700;
+            color: #fff;
+            margin-top: 1.25rem;
+            background: linear-gradient(135deg, var(--p), var(--s));
+            box-shadow: 0 4px 20px var(--glow), 0 0 0 0 rgba(99, 102, 241, 0);
+            transition: all .3s;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: .6rem;
         }
 
-        /* ── Result Section ── */
-        .result-section {
-            margin-top: 2rem;
-            padding-top: 2rem;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        .btn-cta::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, var(--s), var(--p));
+            opacity: 0;
+            transition: opacity .3s;
+        }
+
+        .btn-cta:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 32px var(--glow);
+            box-shadow: 0 8px 24px rgba(99, 102, 241, 0.4)
+        }
+
+        .btn-cta:hover:not(:disabled)::before {
+            opacity: 1
+        }
+
+        .btn-cta span {
+            position: relative;
+            z-index: 1
+        }
+
+        .btn-cta:disabled {
+            opacity: .45;
+            cursor: not-allowed;
+            transform: none
+        }
+
+        /* ── STEP TRACKER ── */
+        .steps {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0;
+            margin-bottom: 1.75rem
+        }
+
+        .step {
+            display: flex;
+            align-items: center;
+            gap: .5rem;
+            font-size: .78rem;
+            color: var(--dim);
+            font-weight: 600
+        }
+
+        .step.active {
+            color: var(--p)
+        }
+
+        .step.done {
+            color: var(--green)
+        }
+
+        .step-dot {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            border: 2px solid currentColor;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: .72rem;
+            font-weight: 700;
+            flex-shrink: 0;
+            transition: all .3s;
+            background: transparent;
+        }
+
+        .step.active .step-dot {
+            background: var(--p);
+            border-color: var(--p);
+            color: #fff;
+            box-shadow: 0 0 12px var(--glow)
+        }
+
+        .step.done .step-dot {
+            background: var(--green);
+            border-color: var(--green);
+            color: #fff
+        }
+
+        .step-line {
+            width: 32px;
+            height: 2px;
+            background: var(--border);
+            margin: 0 .25rem;
+            flex-shrink: 0;
+            transition: background .3s
+        }
+
+        .step-line.done {
+            background: var(--green)
+        }
+
+        /* ── RESULT PANEL ── */
+        .result-panel {
+            margin-top: 1.75rem;
+            padding: 1.75rem;
+            background: var(--sur);
+            border: 1px solid var(--border);
+            border-radius: 20px;
             display: none;
+            animation: fadeUp .5s ease;
         }
 
-        .result-section.active {
-            display: block;
-            animation: fadeIn 0.5s ease;
+        .result-panel.active {
+            display: block
         }
 
-        .comparison-grid {
+        .result-title {
+            font-size: .88rem;
+            font-weight: 700;
+            margin-bottom: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: .5rem
+        }
+
+        .result-title span {
+            background: linear-gradient(90deg, var(--green), #4ade80);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .cmp-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 1rem;
-            margin-top: 1rem;
+            margin-bottom: 1.25rem
         }
 
         .audio-card {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 16px;
+            background: var(--sur2);
+            border: 1px solid var(--border);
+            border-radius: 14px;
             padding: 1.25rem;
             text-align: center;
-            transition: border-color 0.3s;
         }
 
-        .audio-card.input-card {
-            border-top: 3px solid var(--purple);
+        .audio-card.in {
+            border-top: 3px solid var(--s)
         }
 
-        .audio-card.output-card {
-            border-top: 3px solid var(--primary);
+        .audio-card.out {
+            border-top: 3px solid var(--p)
         }
 
-        .audio-card-label {
-            font-size: 0.78rem;
+        .ac-lbl {
+            font-size: .7rem;
             text-transform: uppercase;
-            letter-spacing: 0.08em;
-            font-weight: 600;
-            margin-bottom: 0.75rem;
+            letter-spacing: .07em;
+            font-weight: 700;
+            margin-bottom: .75rem
         }
 
-        .audio-card.input-card .audio-card-label {
-            color: #a78bfa;
+        .audio-card.in .ac-lbl {
+            color: #c4b5fd
         }
 
-        .audio-card.output-card .audio-card-label {
-            color: #818cf8;
+        .audio-card.out .ac-lbl {
+            color: #a5b4fc
         }
 
-        .audio-card-icon {
-            font-size: 1.6rem;
+        .ac-icon {
+            font-size: 1.5rem;
             display: block;
-            margin-bottom: 0.5rem;
+            margin-bottom: .5rem
         }
 
         audio {
             width: 100%;
-            margin-top: 0.5rem;
+            margin-top: .5rem;
             border-radius: 8px;
-            filter: invert(100%) hue-rotate(180deg) brightness(1.5);
+            accent-color: var(--p)
         }
 
-        .btn-download {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            margin-top: 1.25rem;
-            background: rgba(99, 102, 241, 0.15);
-            border: 1px solid rgba(99, 102, 241, 0.4);
-            color: #818cf8;
+        .result-actions {
+            display: flex;
+            gap: .75rem;
+            margin-top: 1rem
+        }
+
+        .btn-dl {
+            flex: 1;
+            padding: .7rem;
             border-radius: 10px;
-            padding: 0.6rem 1.25rem;
-            font-size: 0.9rem;
-            font-weight: 600;
+            font-size: .88rem;
+            font-weight: 700;
             cursor: pointer;
-            transition: all 0.2s ease;
+            background: rgba(99, 102, 241, 0.12);
+            border: 1px solid var(--border2);
+            color: #a5b4fc;
             text-decoration: none;
+            text-align: center;
+            transition: all .2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: .5rem;
         }
 
-        .btn-download:hover {
-            background: rgba(99, 102, 241, 0.3);
-            border-color: var(--primary);
-            color: white;
-            transform: translateY(-1px);
+        .btn-dl:hover {
+            background: rgba(99, 102, 241, 0.25);
+            color: #fff;
+            transform: translateY(-1px)
         }
 
-        @keyframes fadeIn {
+        .transcript {
+            margin-top: 1rem;
+            padding: .875rem;
+            border-radius: 10px;
+            background: rgba(6, 182, 212, 0.07);
+            border: 1px solid rgba(6, 182, 212, 0.2);
+            font-size: .82rem;
+            color: var(--dim2);
+            font-style: italic;
+            line-height: 1.6;
+        }
+
+        /* ── TOAST ── */
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            z-index: 999;
+            background: var(--sur2);
+            border: 1px solid rgba(239, 68, 68, 0.4);
+            border-left: 4px solid var(--red);
+            border-radius: 12px;
+            padding: 1rem 1.25rem;
+            font-size: .88rem;
+            max-width: 360px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            display: none;
+            animation: slideIn .3s ease;
+        }
+
+        .toast-title {
+            font-weight: 700;
+            color: var(--red);
+            margin-bottom: .25rem
+        }
+
+        .toast.show {
+            display: block
+        }
+
+        @keyframes slideIn {
             from {
-                opacity: 0;
-                transform: translateY(10px);
+                transform: translateX(20px);
+                opacity: 0
             }
 
             to {
-                opacity: 1;
-                transform: translateY(0);
+                transform: translateX(0);
+                opacity: 1
             }
         }
 
-        .loading-spinner {
+        /* ── LOADING ── */
+        .spinner {
             display: none;
-            margin: 1rem auto;
-            width: 30px;
-            height: 30px;
-            border: 3px solid rgba(255, 255, 255, 0.1);
+            width: 24px;
+            height: 24px;
             border-radius: 50%;
-            border-top-color: var(--primary);
-            animation: spin 1s linear infinite;
+            border: 3px solid rgba(255, 255, 255, .1);
+            border-top-color: var(--p);
+            animation: spin 0.8s linear infinite;
         }
 
         @keyframes spin {
             to {
-                transform: rotate(360deg);
+                transform: rotate(360deg)
             }
         }
 
-        .status-msg {
-            margin-top: 1rem;
-            font-size: 0.9rem;
-            color: var(--text-dim);
-        }
-
-        .status-msg.error {
-            color: #f87171;
-        }
-
-        @media (max-width: 480px) {
-            .comparison-grid {
-                grid-template-columns: 1fr;
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(12px)
             }
 
-            .controls {
-                grid-template-columns: 1fr;
+            to {
+                opacity: 1;
+                transform: translateY(0)
+            }
+        }
+
+        /* ── RVC PARAMS ── */
+        .rvc-params {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-top: 1rem
+        }
+
+        /* ── GUIDE PANEL ── */
+        .guide-section {
+            margin-bottom: 2rem
+        }
+
+        .guide-section-title {
+            font-size: .72rem;
+            text-transform: uppercase;
+            letter-spacing: .1em;
+            color: var(--p);
+            font-weight: 700;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: .5rem;
+        }
+
+        .guide-section-title::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border)
+        }
+
+        .guide-card {
+            background: var(--sur2);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 1.25rem 1.5rem;
+            margin-bottom: .75rem;
+            border-left: 4px solid var(--p);
+            transition: border-color .2s;
+        }
+
+        .guide-card.smart {
+            border-left-color: var(--s)
+        }
+
+        .guide-card.rvc {
+            border-left-color: var(--c)
+        }
+
+        .guide-card-head {
+            font-size: .92rem;
+            font-weight: 700;
+            margin-bottom: .65rem;
+            display: flex;
+            align-items: center;
+            gap: .5rem
+        }
+
+        .guide-card p {
+            font-size: .84rem;
+            color: var(--dim2);
+            line-height: 1.7;
+            margin-bottom: .5rem
+        }
+
+        .guide-card p:last-child {
+            margin-bottom: 0
+        }
+
+        .guide-tip {
+            display: flex;
+            gap: .6rem;
+            font-size: .82rem;
+            color: var(--dim2);
+            line-height: 1.6;
+            padding: .5rem .75rem;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, .03);
+            margin-top: .4rem;
+        }
+
+        .guide-tip-icon {
+            flex-shrink: 0;
+            opacity: .75
+        }
+
+        /* ── ETHICS RESTRICTIONS ── */
+        .restrict-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: .6rem
+        }
+
+        .restrict-item {
+            display: flex;
+            gap: .75rem;
+            align-items: flex-start;
+            font-size: .84rem;
+            color: var(--dim2);
+            line-height: 1.6;
+            background: rgba(239, 68, 68, 0.05);
+            border: 1px solid rgba(239, 68, 68, 0.15);
+            border-radius: 10px;
+            padding: .75rem 1rem;
+        }
+
+        .restrict-item .ri-icon {
+            font-size: 1.1rem;
+            flex-shrink: 0;
+            margin-top: .05rem
+        }
+
+        .allow-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: .6rem;
+            margin-top: .75rem
+        }
+
+        .allow-item {
+            display: flex;
+            gap: .75rem;
+            align-items: flex-start;
+            font-size: .84rem;
+            color: var(--dim2);
+            line-height: 1.6;
+            background: rgba(34, 197, 94, 0.05);
+            border: 1px solid rgba(34, 197, 94, 0.15);
+            border-radius: 10px;
+            padding: .75rem 1rem;
+        }
+
+        .allow-item .ai-icon {
+            font-size: 1.1rem;
+            flex-shrink: 0;
+            margin-top: .05rem
+        }
+
+        /* ── ETHICS CONSENT MODAL ── */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            background: rgba(7, 9, 26, 0.92);
+            backdrop-filter: blur(12px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+        }
+
+        .modal-box {
+            background: var(--sur);
+            border: 1px solid var(--border2);
+            border-radius: 24px;
+            max-width: 560px;
+            width: 100%;
+            box-shadow: 0 32px 80px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(99, 102, 241, 0.1);
+            overflow: hidden;
+            animation: fadeUp .4s ease;
+        }
+
+        .modal-header {
+            padding: 2rem 2rem 1.25rem;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.12), rgba(168, 85, 247, 0.08));
+            border-bottom: 1px solid var(--border);
+            text-align: center;
+        }
+
+        .modal-icon {
+            font-size: 2.5rem;
+            margin-bottom: .75rem;
+            display: block
+        }
+
+        .modal-title {
+            font-size: 1.4rem;
+            font-weight: 800;
+            margin-bottom: .4rem
+        }
+
+        .modal-subtitle {
+            font-size: .85rem;
+            color: var(--dim2)
+        }
+
+        .modal-body {
+            padding: 1.5rem 2rem
+        }
+
+        .modal-terms {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: .6rem;
+            margin-bottom: 1.5rem;
+            max-height: 240px;
+            overflow-y: auto;
+        }
+
+        .modal-terms li {
+            display: flex;
+            gap: .75rem;
+            font-size: .83rem;
+            color: var(--dim2);
+            line-height: 1.6;
+            padding: .65rem .9rem;
+            border-radius: 9px;
+            background: rgba(255, 255, 255, .03);
+            border: 1px solid var(--border);
+        }
+
+        .modal-terms li span {
+            flex-shrink: 0
+        }
+
+        .modal-check {
+            display: flex;
+            align-items: flex-start;
+            gap: .75rem;
+            font-size: .88rem;
+            color: var(--dim2);
+            cursor: pointer;
+            padding: .85rem 1rem;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            margin-bottom: 1rem;
+            transition: border-color .2s, background .2s;
+        }
+
+        .modal-check:hover {
+            border-color: var(--border2);
+            background: rgba(99, 102, 241, 0.05)
+        }
+
+        .modal-check input {
+            width: 16px;
+            height: 16px;
+            flex-shrink: 0;
+            margin-top: .15rem;
+            accent-color: var(--p);
+            cursor: pointer
+        }
+
+        .modal-check strong {
+            color: var(--txt)
+        }
+
+        .btn-accept {
+            width: 100%;
+            padding: .95rem;
+            border: none;
+            border-radius: 12px;
+            font-size: .95rem;
+            font-weight: 700;
+            color: #fff;
+            cursor: not-allowed;
+            opacity: .4;
+            background: linear-gradient(135deg, var(--p), var(--s));
+            transition: all .3s;
+        }
+
+        .btn-accept.ready {
+            opacity: 1;
+            cursor: pointer
+        }
+
+        .btn-accept.ready:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 8px 24px var(--glow)
+        }
+
+        /* sidebar ethics badge */
+        .ethics-badge {
+            margin-top: .75rem;
+            display: flex;
+            align-items: center;
+            gap: .5rem;
+            font-size: .7rem;
+            color: var(--dim);
+            cursor: pointer;
+            padding: .4rem .5rem;
+            border-radius: 8px;
+            transition: background .2s;
+        }
+
+        .ethics-badge:hover {
+            background: rgba(255, 255, 255, .04);
+            color: var(--dim2)
+        }
+
+        .ethics-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--green);
+            flex-shrink: 0;
+            box-shadow: 0 0 6px var(--green)
+        }
+
+        /* ── MOBILE ── */
+        @media(max-width:768px) {
+            .app {
+                flex-direction: column
+            }
+
+            .sidebar {
+                width: 100%;
+                min-width: unset;
+                height: auto;
+                border-right: none;
+                border-bottom: 1px solid var(--border)
+            }
+
+            .sidebar-top {
+                padding: 1.25rem
+            }
+
+            .nav {
+                display: flex;
+                flex-direction: row;
+                overflow-x: auto;
+                padding: .75rem;
+                gap: .5rem
+            }
+
+            .nav-label {
+                display: none
+            }
+
+            .nav-item {
+                flex-direction: column;
+                text-align: center;
+                gap: .4rem;
+                padding: .75rem;
+                min-width: 90px
+            }
+
+            .nav-desc {
+                display: none
+            }
+
+            .waveform {
+                display: none
+            }
+
+            .panel-body {
+                padding: 1.25rem
+            }
+
+            .ctrl-grid,
+            .cmp-grid,
+            .rvc-params {
+                grid-template-columns: 1fr
+            }
+
+            .panel-header {
+                padding: 1.25rem
+            }
+
+            .modal-body {
+                padding: 1.25rem
+            }
+
+            .modal-header {
+                padding: 1.5rem 1.25rem 1rem
             }
         }
     </style>
 </head>
 
 <body>
-    <div class="container">
-        <h1>VoiceQuest</h1>
-        <p class="subtitle">Clone any voice — accent, tone, and identity</p>
 
-        <!-- ── Main Mode Toggle ── -->
-        <div class="mode-toggle">
-            <button onclick="setMode('tts')" id="ttsToggle" style="background: var(--primary); color: white;">🗣
-                Text-to-Speech</button>
-            <button onclick="setMode('s2s')" id="s2sToggle" style="background: transparent; color: var(--text-dim);">🎭
-                Mimicry Mode</button>
-        </div>
+    <div class="app">
 
-        <!-- ── S2S Sub-mode Pills ── -->
-        <div class="sub-mode-bar" id="subModeBar">
-            <button id="smartMimicBtn" class="active" onclick="setMimicryMode('smart')">⚡ Smart Mimic
-                (Recommended)</button>
-            <button id="rvcMimicBtn" onclick="setMimicryMode('rvc')">🎛 RVC Mimic (Advanced)</button>
-        </div>
-
-        <!-- ── Info Banners ── -->
-        <div class="info-banner green visible" id="ttsInfo">
-            <strong>How it works:</strong> Upload a voice sample, type custom text (or leave blank to clone speech from
-            the audio), and we'll synthesize the voice.
-        </div>
-        <div class="info-banner green" id="smartMimicInfo">
-            <strong>Smart Mimic — no model needed!</strong><br>
-            <span style="display:block; margin-top:0.5rem;">
-                <b>Step 1 ①</b> — Upload a clip of the <em>person you want to mimic</em> (6–30 sec is ideal).<br>
-                <b>Step 2 ②</b> — Upload <em>your own recording</em> saying the content you want them to "say".<br>
-                The output will sound like the target person speaking your words, with their accent.
-            </span>
-        </div>
-        <div class="info-banner purple" id="rvcMimicInfo">
-            <strong>RVC Mimic — requires a trained model.</strong><br>
-            Upload your performance audio and a target voice sample. The server must have a <code>.pth</code> model in
-            <code>assets/weights/</code>.
-        </div>
-
-        <!-- ═══════════════════════════════════════════
-         TTS MODE
-    ═══════════════════════════════════════════ -->
-        <div id="ttsSection">
-            <div class="upload-section" onclick="document.getElementById('voiceInputTts').click()">
-                <span class="upload-icon">👤</span>
-                <div class="upload-label">Target Voice (to clone)</div>
-                <div class="upload-name" id="fileNameTts">Click to upload audio file</div>
-                <input type="file" id="voiceInputTts" accept="audio/*" onchange="handleFileSelect(event, 'tts')">
-            </div>
-
-            <div class="control-group" style="margin-bottom: 1.5rem;">
-                <label>Content to Speak (Optional)</label>
-                <textarea id="customText" rows="3"
-                    placeholder="Leave empty to clone speech from the uploaded audio..."></textarea>
-            </div>
-
-            <div class="controls" id="ttsControls">
-                <div class="control-group">
-                    <label>Language</label>
-                    <select id="ttsLanguage">
-                        <option value="en">🇬🇧 English</option>
-                        <option value="es">🇪🇸 Spanish</option>
-                        <option value="fr">🇫🇷 French</option>
-                        <option value="de">🇩🇪 German</option>
-                        <option value="it">🇮🇹 Italian</option>
-                        <option value="pt">🇧🇷 Portuguese</option>
-                        <option value="ru">🇷🇺 Russian</option>
-                        <option value="ja">🇯🇵 Japanese</option>
-                        <option value="ko">🇰🇷 Korean</option>
-                        <option value="zh-cn">🇨🇳 Chinese</option>
-                    </select>
+        <!-- ══ SIDEBAR ══ -->
+        <aside class="sidebar">
+            <div class="sidebar-top">
+                <div class="logo">
+                    <div class="logo-icon">🎙️</div>
+                    <div class="logo-text">VoiceQuest</div>
                 </div>
-                <div class="control-group">
-                    <label>Tone</label>
-                    <select id="tone">
-                        <option value="calm">😌 Calm</option>
-                        <option value="energetic">⚡ Energetic (+15% speed)</option>
-                        <option value="dramatic">🎭 Dramatic (slower)</option>
-                        <option value="whisper">🤫 Whisper (slow)</option>
-                        <option value="cheerful">😄 Cheerful (+10% speed)</option>
-                    </select>
+                <div class="logo-sub">AI Voice Cloning Studio</div>
+                <div class="waveform">
+                    <span></span><span></span><span></span><span></span><span></span>
+                    <span></span><span></span><span></span><span></span><span></span><span></span>
                 </div>
             </div>
 
-            <!-- Speed Slider (TTS) -->
-            <div class="speed-row">
-                <label for="ttsSpeed">🎚 Speed</label>
-                <input type="range" id="ttsSpeed" min="0.8" max="1.2" step="0.05" value="1.0"
-                    oninput="updateSlider('ttsSpeed','ttsSpeedVal')">
-                <span class="speed-val" id="ttsSpeedVal">1.0×</span>
-            </div>
-        </div>
-
-        <!-- ═══════════════════════════════════════════
-         SMART MIMIC MODE
-    ═══════════════════════════════════════════ -->
-        <div id="smartMimicSection" style="display:none;">
-            <div class="steps-row visible">
-                <span class="step-badge">1</span>
-                <span>Target voice</span>
-                <span class="step-arrow">→</span>
-                <span class="step-badge">2</span>
-                <span>Audio <em>or</em> Text</span>
-                <span class="step-arrow">→</span>
-                <span>✨ Mimic output</span>
-            </div>
-
-            <!-- Step 1: Target person's voice -->
-            <div class="upload-section" onclick="document.getElementById('targetVoiceSmart').click()">
-                <span class="upload-icon">👤</span>
-                <div class="upload-label">① Target Person's Voice (who to mimic)</div>
-                <div class="upload-name" id="targetVoiceSmartName">Upload a clip of the person you want to mimic</div>
-                <input type="file" id="targetVoiceSmart" accept="audio/*"
-                    onchange="handleFileSelect(event, 'smart-target')">
-            </div>
-
-            <!-- Step 2a: Custom text input -->
-            <div class="control-group" style="margin-bottom: 0.75rem; text-align: left;">
-                <label>② What to Say (Type your text here...)</label>
-                <textarea id="smartMimicText" rows="3" style="width:100%; background:rgba(15,23,42,0.5); border:1px solid rgba(139,92,246,0.35);
-                           border-radius:12px; padding:1rem; color:white; resize:none; outline:none;
-                           transition:border-color 0.2s;" onfocus="this.style.borderColor='#8b5cf6'"
-                    onblur="this.style.borderColor='rgba(139,92,246,0.35)'"
-                    placeholder="Type the words you want the target person to say..."></textarea>
-            </div>
-
-            <!-- Divider -->
-            <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:0.75rem;">
-                <div style="flex:1; height:1px; background:rgba(255,255,255,0.08);"></div>
-                <span style="font-size:0.78rem; color:var(--text-dim); font-weight:600;">OR upload performance
-                    audio</span>
-                <div style="flex:1; height:1px; background:rgba(255,255,255,0.08);"></div>
-            </div>
-
-            <!-- Step 2b: User's own performance audio -->
-            <div class="upload-section perf-upload" onclick="document.getElementById('perfInputSmart').click()">
-                <span class="upload-icon">🎙️</span>
-                <div class="upload-label">② Your Performance Audio (optional if text is typed above)</div>
-                <div class="upload-name" id="perfInputSmartName">Upload your own recording to transcribe</div>
-                <input type="file" id="perfInputSmart" accept="audio/*"
-                    onchange="handleFileSelect(event, 'smart-perf')">
-            </div>
-
-            <!-- Language + Speed row (Smart Mimic) -->
-            <div class="controls" style="margin-top:0.75rem;">
-                <div class="control-group">
-                    <label>Output Language</label>
-                    <select id="smartLanguage">
-                        <option value="en">🇬🇧 English</option>
-                        <option value="es">🇪🇸 Spanish</option>
-                        <option value="fr">🇫🇷 French</option>
-                        <option value="de">🇩🇪 German</option>
-                        <option value="it">🇮🇹 Italian</option>
-                        <option value="pt">🇧🇷 Portuguese</option>
-                        <option value="ru">🇷🇺 Russian</option>
-                        <option value="ja">🇯🇵 Japanese</option>
-                        <option value="ko">🇰🇷 Korean</option>
-                        <option value="zh-cn">🇨🇳 Chinese</option>
-                    </select>
+            <nav class="nav">
+                <div class="nav-label">Modes</div>
+                <div class="nav-item active" id="nav-tts" onclick="setMode('tts')">
+                    <div class="nav-icon">🗣️</div>
+                    <div class="nav-info">
+                        <div class="nav-title">TTS Clone</div>
+                        <div class="nav-desc">Type text in any voice</div>
+                    </div>
+                    <div class="nav-badge">FAST</div>
                 </div>
-                <div class="control-group">
-                    <label>🎚 Speed</label>
-                    <div style="display:flex;align-items:center;gap:0.5rem;padding-top:0.3rem;">
-                        <input type="range" id="smartSpeed" min="0.8" max="1.2" step="0.05" value="1.0"
-                            oninput="updateSlider('smartSpeed','smartSpeedVal')">
-                        <span class="speed-val" id="smartSpeedVal">1.0×</span>
+                <div class="nav-item" id="nav-smart" onclick="setMode('smart')">
+                    <div class="nav-icon">🎭</div>
+                    <div class="nav-info">
+                        <div class="nav-title">Smart Mimic</div>
+                        <div class="nav-desc">Clone accent & identity</div>
+                    </div>
+                    <div class="nav-badge">AI</div>
+                </div>
+                <div class="nav-item" id="nav-rvc" onclick="setMode('rvc')">
+                    <div class="nav-icon">🎛️</div>
+                    <div class="nav-info">
+                        <div class="nav-title">RVC Mimic</div>
+                        <div class="nav-desc">Trained model required</div>
+                    </div>
+                    <div class="nav-badge">PRO</div>
+                </div>
+
+                <div class="nav-label" style="margin-top:.5rem">Help</div>
+                <div class="nav-item" id="nav-guide" onclick="setMode('guide')">
+                    <div class="nav-icon">📖</div>
+                    <div class="nav-info">
+                        <div class="nav-title">How to Use</div>
+                        <div class="nav-desc">Tips, guide &amp; ethics</div>
                     </div>
                 </div>
-            </div>
-        </div>
+            </nav>
 
-        <!-- ═══════════════════════════════════════════
-         RVC MIMIC MODE
-    ═══════════════════════════════════════════ -->
-        <div id="rvcMimicSection" style="display:none;">
-            <div class="upload-section" onclick="document.getElementById('voiceInputRvc').click()">
-                <span class="upload-icon">👤</span>
-                <div class="upload-label">Target Voice (to clone)</div>
-                <div class="upload-name" id="fileNameRvc">Upload target voice audio</div>
-                <input type="file" id="voiceInputRvc" accept="audio/*" onchange="handleFileSelect(event, 'rvc-target')">
-            </div>
-
-            <div class="upload-section perf-upload" onclick="document.getElementById('perfInputRvc').click()">
-                <span class="upload-icon">🎙️</span>
-                <div class="upload-label">Your Performance (accent/tone to preserve)</div>
-                <div class="upload-name" id="perfInputRvcName">Upload your performance audio</div>
-                <input type="file" id="perfInputRvc" accept="audio/*" onchange="handleFileSelect(event, 'rvc-perf')">
-            </div>
-
-            <div class="controls" style="margin-top: 1rem;">
-                <div class="control-group">
-                    <label>Pitch Shift</label>
-                    <select id="pitchShift">
-                        <option value="-12">-1 Octave</option>
-                        <option value="-6">-Half Octave</option>
-                        <option value="0" selected>Neutral</option>
-                        <option value="6">+Half Octave</option>
-                        <option value="12">+1 Octave</option>
-                    </select>
-                </div>
-                <div class="control-group">
-                    <label>Voice Similarity</label>
-                    <select id="indexRate">
-                        <option value="0.5">Natural (0.5)</option>
-                        <option value="0.75" selected>High (0.75) ★</option>
-                        <option value="1.0">Maximum (1.0)</option>
-                    </select>
-                </div>
-                <div class="control-group">
-                    <label>Pitch Smoothing</label>
-                    <select id="filterRadius">
-                        <option value="1">Minimal (1)</option>
-                        <option value="3" selected>Balanced (3) ★</option>
-                        <option value="5">Smooth (5)</option>
-                        <option value="7">Very Smooth (7)</option>
-                    </select>
-                </div>
-                <div class="control-group">
-                    <label>Consonant Protection</label>
-                    <select id="protect">
-                        <option value="0.5">Max Protect (0.5)</option>
-                        <option value="0.33" selected>Balanced (0.33) ★</option>
-                        <option value="0.1">Minimal (0.1)</option>
-                    </select>
+            <div class="sidebar-footer">
+                <div class="version-badge">v2.x Beta</div>
+                <div style="margin-top:.6rem;color:var(--dim);font-size:.7rem">Powered by XTTS v2 + Faster-Whisper</div>
+                <div class="ethics-badge" onclick="document.getElementById('modal').style.display='flex'">
+                    <div class="ethics-dot"></div>
+                    Ethical Use Policy — review
                 </div>
             </div>
-        </div>
+        </aside>
 
-        <!-- ── Process Button ── -->
-        <button class="btn-primary" id="processBtn" onclick="processVoice()">🗣 Clone Voice</button>
+        <!-- ══ MAIN ══ -->
+        <main class="main">
 
-        <div class="loading-spinner" id="loader"></div>
-        <p class="status-msg" id="status"></p>
-
-        <!-- ── Result Section ── -->
-        <div class="result-section" id="result">
-            <p id="resultLabel" style="margin-bottom: 1rem; font-weight: 600; font-size: 1rem;">
-                ✅ Done! Compare Input vs Output:
-            </p>
-
-            <div class="comparison-grid">
-                <div class="audio-card input-card">
-                    <span class="audio-card-icon">🎤</span>
-                    <div class="audio-card-label" id="inputCardLabel">Original Input</div>
-                    <audio id="inputPlayer" controls></audio>
+            <!-- Panel: TTS Clone -->
+            <div id="panel-tts">
+                <div class="panel-header">
+                    <div class="panel-title">🗣️ TTS Clone Mode</div>
+                    <div class="panel-sub">Upload a voice reference and type what you want it to say</div>
                 </div>
-                <div class="audio-card output-card">
-                    <span class="audio-card-icon">✨</span>
-                    <div class="audio-card-label" id="outputCardLabel">Cloned Output</div>
-                    <audio id="audioPlayer" controls></audio>
+                <div class="panel-body">
+                    <div class="info-box">
+                        <div class="info-box-icon">💡</div>
+                        <div><strong>How it works:</strong> Upload a voice sample (≥3 seconds). Type custom text below —
+                            or leave it blank to clone exactly what the audio says.</div>
+                    </div>
+
+                    <div class="upload-zone" id="uz-tts" onclick="document.getElementById('f-tts').click()"
+                        ondrop="dropFile(event,'tts')" ondragover="dragOver(event,'uz-tts')"
+                        ondragleave="dragLeave('uz-tts')">
+                        <div class="uz-icon">👤</div>
+                        <div class="uz-text">
+                            <div class="uz-label">Reference Voice (to clone)</div>
+                            <div class="uz-name" id="n-tts">Click or drag &amp; drop an audio file here</div>
+                        </div>
+                        <input type="file" id="f-tts" accept="audio/*" onchange="selectFile(event,'tts')">
+                    </div>
+
+                    <div class="ctrl-group" style="margin-bottom:1.25rem">
+                        <label class="ctrl-label">Content to Speak <span
+                                style="font-weight:400;text-transform:none;letter-spacing:0">(leave blank to clone from
+                                audio)</span></label>
+                        <textarea id="customText" rows="3"
+                            placeholder="Type what you want the voice to say…"></textarea>
+                    </div>
+
+                    <div class="ctrl-grid">
+                        <div class="ctrl-group">
+                            <label class="ctrl-label">Language</label>
+                            <select id="ttsLang">
+                                <option value="en">🇬🇧 English</option>
+                                <option value="es">🇪🇸 Spanish</option>
+                                <option value="fr">🇫🇷 French</option>
+                                <option value="de">🇩🇪 German</option>
+                                <option value="it">🇮🇹 Italian</option>
+                                <option value="pt">🇧🇷 Portuguese</option>
+                                <option value="ru">🇷🇺 Russian</option>
+                                <option value="ja">🇯🇵 Japanese</option>
+                                <option value="ko">🇰🇷 Korean</option>
+                                <option value="zh-cn">🇨🇳 Chinese</option>
+                                <option value="ar">🇸🇦 Arabic</option>
+                                <option value="hi">🇮🇳 Hindi</option>
+                            </select>
+                        </div>
+                        <div class="ctrl-group">
+                            <label class="ctrl-label">Tone</label>
+                            <select id="tone">
+                                <option value="calm">😌 Calm</option>
+                                <option value="energetic">⚡ Energetic</option>
+                                <option value="dramatic">🎭 Dramatic</option>
+                                <option value="whisper">🤫 Whisper</option>
+                                <option value="cheerful">😄 Cheerful</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="speed-row">
+                        <label class="ctrl-label">🎚 Speech Speed</label>
+                        <input type="range" id="ttsSpeed" min="0.8" max="1.2" step="0.05" value="1.0"
+                            oninput="syncSlider(this,'ttsSpeedVal')">
+                        <span class="speed-val" id="ttsSpeedVal">1.00×</span>
+                    </div>
+
+                    <button class="btn-cta" id="btn-tts" onclick="run()">
+                        <span>🗣️</span><span>Clone Voice</span>
+                        <div class="spinner" id="sp-tts"></div>
+                    </button>
                 </div>
             </div>
 
-            <div style="text-align: center;">
-                <a id="downloadBtn" class="btn-download" download="voicequest_output.wav">
-                    ⬇️ Download Output
-                </a>
+            <!-- Panel: Smart Mimic -->
+            <div id="panel-smart" style="display:none">
+                <div class="panel-header">
+                    <div class="panel-title">🎭 Smart Mimic Mode</div>
+                    <div class="panel-sub">Re-speak anything in someone else's voice — no model training needed</div>
+                </div>
+                <div class="panel-body">
+                    <div class="info-box">
+                        <div class="info-box-icon">⚡</div>
+                        <div><strong>Step 1:</strong> Upload the target person's voice. &nbsp;<strong>Step 2:</strong>
+                            Type what to say OR upload your own audio recording. The output will sound like the target
+                            speaker saying your words.</div>
+                    </div>
+
+                    <div class="steps" id="steps-smart">
+                        <div class="step active" id="s1">
+                            <div class="step-dot">1</div>Target Voice
+                        </div>
+                        <div class="step-line" id="sl1"></div>
+                        <div class="step" id="s2">
+                            <div class="step-dot">2</div>What to Say
+                        </div>
+                        <div class="step-line" id="sl2"></div>
+                        <div class="step" id="s3">
+                            <div class="step-dot">3</div>Output
+                        </div>
+                    </div>
+
+                    <div class="upload-zone" id="uz-smart-t" onclick="document.getElementById('f-smart-t').click()"
+                        ondrop="dropFile(event,'smart-t')" ondragover="dragOver(event,'uz-smart-t')"
+                        ondragleave="dragLeave('uz-smart-t')">
+                        <div class="uz-icon">👤</div>
+                        <div class="uz-text">
+                            <div class="uz-label">① Target Person's Voice (who to mimic)</div>
+                            <div class="uz-name" id="n-smart-t">Upload a 6–30 second clip of the person you want to
+                                sound like</div>
+                        </div>
+                        <input type="file" id="f-smart-t" accept="audio/*" onchange="selectFile(event,'smart-t')">
+                    </div>
+
+                    <div class="ctrl-group" style="margin-bottom:.75rem">
+                        <label class="ctrl-label">② Type what to say</label>
+                        <textarea id="smartText" rows="3"
+                            placeholder="Type the words you want the target person to say…"></textarea>
+                    </div>
+
+                    <div class="or-divider">or upload your own performance audio</div>
+
+                    <div class="upload-zone perf" id="uz-smart-p" onclick="document.getElementById('f-smart-p').click()"
+                        ondrop="dropFile(event,'smart-p')" ondragover="dragOver(event,'uz-smart-p')"
+                        ondragleave="dragLeave('uz-smart-p')">
+                        <div class="uz-icon">🎙️</div>
+                        <div class="uz-text">
+                            <div class="uz-label">② Your Performance Audio (optional if text typed above)</div>
+                            <div class="uz-name" id="n-smart-p">Upload your own recording to transcribe</div>
+                        </div>
+                        <input type="file" id="f-smart-p" accept="audio/*" onchange="selectFile(event,'smart-p')">
+                    </div>
+
+                    <div class="ctrl-grid">
+                        <div class="ctrl-group">
+                            <label class="ctrl-label">Output Language</label>
+                            <select id="smartLang">
+                                <option value="en">🇬🇧 English</option>
+                                <option value="es">🇪🇸 Spanish</option>
+                                <option value="fr">🇫🇷 French</option>
+                                <option value="de">🇩🇪 German</option>
+                                <option value="it">🇮🇹 Italian</option>
+                                <option value="pt">🇧🇷 Portuguese</option>
+                                <option value="ru">🇷🇺 Russian</option>
+                                <option value="ja">🇯🇵 Japanese</option>
+                                <option value="ko">🇰🇷 Korean</option>
+                                <option value="zh-cn">🇨🇳 Chinese</option>
+                                <option value="ar">🇸🇦 Arabic</option>
+                                <option value="hi">🇮🇳 Hindi</option>
+                            </select>
+                        </div>
+                        <div class="ctrl-group">
+                            <label class="ctrl-label">Speech Speed</label>
+                            <div class="speed-row" style="margin:0">
+                                <input type="range" id="smartSpeed" min="0.8" max="1.2" step="0.05" value="1.0"
+                                    oninput="syncSlider(this,'smartSpeedVal')">
+                                <span class="speed-val" id="smartSpeedVal">1.00×</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button class="btn-cta" id="btn-smart" onclick="run()">
+                        <span>🎭</span><span>Mimic Accent &amp; Voice</span>
+                        <div class="spinner" id="sp-smart"></div>
+                    </button>
+                </div>
             </div>
 
-            <div id="transcribedText"
-                style="margin-top: 1rem; font-style: italic; color: var(--text-dim); font-size: 0.85rem; text-align: center;">
+            <!-- Panel: RVC Mimic -->
+            <div id="panel-rvc" style="display:none">
+                <div class="panel-header">
+                    <div class="panel-title">🎛️ RVC Mimic Mode</div>
+                    <div class="panel-sub">Professional voice identity transfer using a trained RVC model</div>
+                </div>
+                <div class="panel-body">
+                    <div class="info-box purple">
+                        <div class="info-box-icon">⚠️</div>
+                        <div><strong>Requirements:</strong> A trained <code
+                                style="background:rgba(255,255,255,.08);padding:1px 5px;border-radius:4px">.pth</code>
+                            model must exist in <code
+                                style="background:rgba(255,255,255,.08);padding:1px 5px;border-radius:4px">assets/weights/</code>.
+                            Without it, this returns a 400 error.</div>
+                    </div>
+
+                    <div class="upload-zone" id="uz-rvc-t" onclick="document.getElementById('f-rvc-t').click()"
+                        ondrop="dropFile(event,'rvc-t')" ondragover="dragOver(event,'uz-rvc-t')"
+                        ondragleave="dragLeave('uz-rvc-t')">
+                        <div class="uz-icon">👤</div>
+                        <div class="uz-text">
+                            <div class="uz-label">Target Voice (identity to clone)</div>
+                            <div class="uz-name" id="n-rvc-t">Upload target voice audio</div>
+                        </div>
+                        <input type="file" id="f-rvc-t" accept="audio/*" onchange="selectFile(event,'rvc-t')">
+                    </div>
+
+                    <div class="upload-zone perf" id="uz-rvc-p" onclick="document.getElementById('f-rvc-p').click()"
+                        ondrop="dropFile(event,'rvc-p')" ondragover="dragOver(event,'uz-rvc-p')"
+                        ondragleave="dragLeave('uz-rvc-p')">
+                        <div class="uz-icon">🎙️</div>
+                        <div class="uz-text">
+                            <div class="uz-label">Your Performance (accent/tone to preserve)</div>
+                            <div class="uz-name" id="n-rvc-p">Upload your performance audio</div>
+                        </div>
+                        <input type="file" id="f-rvc-p" accept="audio/*" onchange="selectFile(event,'rvc-p')">
+                    </div>
+
+                    <div class="rvc-params">
+                        <div class="ctrl-group">
+                            <label class="ctrl-label">Pitch Shift</label>
+                            <select id="pitchShift">
+                                <option value="-12">-1 Octave</option>
+                                <option value="-6">-Half Octave</option>
+                                <option value="0" selected>Neutral</option>
+                                <option value="6">+Half Octave</option>
+                                <option value="12">+1 Octave</option>
+                            </select>
+                        </div>
+                        <div class="ctrl-group">
+                            <label class="ctrl-label">Voice Similarity</label>
+                            <select id="indexRate">
+                                <option value="0.5">Natural (0.5)</option>
+                                <option value="0.75" selected>High (0.75) ★</option>
+                                <option value="1.0">Maximum (1.0)</option>
+                            </select>
+                        </div>
+                        <div class="ctrl-group">
+                            <label class="ctrl-label">Pitch Smoothing</label>
+                            <select id="filterRadius">
+                                <option value="1">Minimal (1)</option>
+                                <option value="3" selected>Balanced (3) ★</option>
+                                <option value="5">Smooth (5)</option>
+                                <option value="7">Very Smooth (7)</option>
+                            </select>
+                        </div>
+                        <div class="ctrl-group">
+                            <label class="ctrl-label">Consonant Protect</label>
+                            <select id="protect">
+                                <option value="0.5">Max (0.5)</option>
+                                <option value="0.33" selected>Balanced (0.33) ★</option>
+                                <option value="0.1">Minimal (0.1)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <button class="btn-cta" id="btn-rvc" onclick="run()">
+                        <span>🎛️</span><span>Convert with RVC</span>
+                        <div class="spinner" id="sp-rvc"></div>
+                    </button>
+                </div>
+            </div>
+
+            <!-- ══ RESULT (shared, lives inside panel bodies via JS) ══ -->
+            <div id="result-wrapper" style="padding:0 2.5rem 2rem;display:none">
+                <div class="result-panel active" id="result">
+                    <div class="result-title">✅ <span>Done! Compare Input vs Output</span></div>
+                    <div class="cmp-grid">
+                        <div class="audio-card in">
+                            <span class="ac-icon">🎤</span>
+                            <div class="ac-lbl" id="in-lbl">Original Input</div>
+                            <audio id="audioIn" controls></audio>
+                        </div>
+                        <div class="audio-card out">
+                            <span class="ac-icon">✨</span>
+                            <div class="ac-lbl" id="out-lbl">Cloned Output</div>
+                            <audio id="audioOut" controls></audio>
+                        </div>
+                    </div>
+                    <div class="result-actions">
+                        <a id="dlBtn" class="btn-dl" download="voicequest_output.wav">⬇️ Download Output</a>
+                    </div>
+                    <div class="transcript" id="transcript" style="display:none"></div>
+                </div>
+            </div>
+
+            <!-- ══ GUIDE PANEL ══ -->
+            <div id="panel-guide" style="display:none">
+                <div class="panel-header">
+                    <div class="panel-title">📖 How to Use VoiceQuest</div>
+                    <div class="panel-sub">Tips for best results, usage guide, and ethical use policy</div>
+                </div>
+                <div class="panel-body">
+
+                    <!-- TTS Tips -->
+                    <div class="guide-section">
+                        <div class="guide-section-title">🗣️ TTS Clone Mode</div>
+                        <div class="guide-card">
+                            <div class="guide-card-head">🎯 Best Practices</div>
+                            <p>Upload a <strong>clear, noise-free</strong> audio clip of the voice you want to clone.
+                                The AI needs at least <strong>3 seconds</strong> of speech — 6–15 seconds gives the best
+                                results.</p>
+                            <div class="guide-tip"><span class="guide-tip-icon">✅</span> Use WAV, MP3, or OGG files.
+                                Mono recordings work best.</div>
+                            <div class="guide-tip"><span class="guide-tip-icon">✅</span> Leave the text box
+                                <strong>empty</strong> to automatically clone what the person said in the audio.</div>
+                            <div class="guide-tip"><span class="guide-tip-icon">✅</span> Type your own text to make the
+                                voice say anything you want.</div>
+                            <div class="guide-tip"><span class="guide-tip-icon">⚡</span> Speed 1.0× is natural. Try 0.9×
+                                for a more deliberate, clear output.</div>
+                            <div class="guide-tip"><span class="guide-tip-icon">🌍</span> Match the Language setting to
+                                the language of the text — mismatches cause poor output.</div>
+                        </div>
+                    </div>
+
+                    <!-- Smart Mimic Tips -->
+                    <div class="guide-section">
+                        <div class="guide-section-title">🎭 Smart Mimic Mode</div>
+                        <div class="guide-card smart">
+                            <div class="guide-card-head">🎯 Best Practices</div>
+                            <p>This mode re-speaks content using someone else's voice identity via zero-shot AI —
+                                <strong>no model training needed</strong>.</p>
+                            <div class="guide-tip"><span class="guide-tip-icon">①</span> Upload the <strong>target
+                                    voice</strong> (who you want to sound like). Longer clips = better voice
+                                fingerprint.</div>
+                            <div class="guide-tip"><span class="guide-tip-icon">②</span> Either <strong>type the
+                                    text</strong> to say (fastest), or <strong>upload your own recording</strong> of
+                                what you want said — it will be transcribed first.</div>
+                            <div class="guide-tip"><span class="guide-tip-icon">✅</span> If uploading your performance,
+                                speak clearly and avoid background noise for accurate transcription.</div>
+                            <div class="guide-tip"><span class="guide-tip-icon">⚠️</span> The output accent/language
+                                comes from the <strong>target voice</strong>, not your performance.</div>
+                        </div>
+                    </div>
+
+                    <!-- RVC Tips -->
+                    <div class="guide-section">
+                        <div class="guide-section-title">🎛️ RVC Mimic Mode</div>
+                        <div class="guide-card rvc">
+                            <div class="guide-card-head">🎯 Best Practices</div>
+                            <p>RVC uses a <strong>pre-trained .pth model</strong> to apply a voice identity to your
+                                audio. This requires a trained model file in <code
+                                    style="background:rgba(255,255,255,.07);padding:1px 6px;border-radius:4px">assets/weights/</code>.
+                            </p>
+                            <div class="guide-tip"><span class="guide-tip-icon">🎛</span> <strong>Pitch Shift:</strong>
+                                Set to 0 for same gender. Use +12 (male→female) or -12 (female→male).</div>
+                            <div class="guide-tip"><span class="guide-tip-icon">🎛</span> <strong>Voice Similarity
+                                    0.75</strong> is the recommended default — higher values can sound unnatural.</div>
+                            <div class="guide-tip"><span class="guide-tip-icon">🎛</span> <strong>Pitch Smoothing
+                                    3</strong> is balanced — higher values reduce pitch wobble.</div>
+                            <div class="guide-tip"><span class="guide-tip-icon">⚠️</span> Without a .pth model file,
+                                this mode returns a 400 error. See the README for how to acquire models.</div>
+                        </div>
+                    </div>
+
+                    <!-- Audio Quality Tips -->
+                    <div class="guide-section">
+                        <div class="guide-section-title">🔊 Audio Quality Tips</div>
+                        <div class="guide-card">
+                            <div class="guide-card-head">📻 For Best Results</div>
+                            <div class="guide-tip"><span class="guide-tip-icon">🎙️</span> Record in a quiet room.
+                                Background noise reduces voice fingerprint accuracy significantly.</div>
+                            <div class="guide-tip"><span class="guide-tip-icon">📏</span> Keep reference clips between
+                                6–30 seconds. Very long clips are cropped internally.</div>
+                            <div class="guide-tip"><span class="guide-tip-icon">🔇</span> The AI automatically applies
+                                noise reduction and normalization — you don't need to pre-process audio.</div>
+                            <div class="guide-tip"><span class="guide-tip-icon">⏱️</span> Processing takes ~10–30
+                                seconds on GPU, ~60–120 seconds on CPU. Be patient after clicking the button.</div>
+                        </div>
+                    </div>
+
+                    <!-- Ethical Use -->
+                    <div class="guide-section">
+                        <div class="guide-section-title">🛡️ Ethical Use Policy</div>
+
+                        <div
+                            style="background:rgba(239,68,68,0.07);border:1px solid rgba(239,68,68,0.2);border-radius:14px;padding:1.25rem 1.5rem;margin-bottom:1rem">
+                            <div style="font-size:.88rem;font-weight:700;color:#fca5a5;margin-bottom:.75rem">🚫
+                                Prohibited Uses</div>
+                            <ul class="restrict-list">
+                                <li class="restrict-item"><span class="ri-icon">🚫</span><span>Cloning someone's voice
+                                        <strong>without their explicit consent</strong> for any purpose.</span></li>
+                                <li class="restrict-item"><span class="ri-icon">🚫</span><span>Creating <strong>deepfake
+                                            audio</strong> to impersonate real people, including public figures,
+                                        celebrities, or family members.</span></li>
+                                <li class="restrict-item"><span class="ri-icon">🚫</span><span>Using synthesized voices
+                                        to <strong>deceive, defraud, manipulate</strong>, or spread
+                                        misinformation.</span></li>
+                                <li class="restrict-item"><span class="ri-icon">🚫</span><span>Generating audio for
+                                        <strong>harassment, hate speech, or non-consensual intimate
+                                            content</strong>.</span></li>
+                                <li class="restrict-item"><span class="ri-icon">🚫</span><span>Bypassing any platform's
+                                        <strong>identity verification</strong> or security systems using cloned
+                                        voices.</span></li>
+                                <li class="restrict-item"><span class="ri-icon">🚫</span><span>Commercial use of cloned
+                                        voices without <strong>legal licensing</strong> from the voice owner.</span>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <div
+                            style="background:rgba(34,197,94,0.07);border:1px solid rgba(34,197,94,0.2);border-radius:14px;padding:1.25rem 1.5rem">
+                            <div style="font-size:.88rem;font-weight:700;color:#86efac;margin-bottom:.75rem">✅ Permitted
+                                Uses</div>
+                            <ul class="allow-list">
+                                <li class="allow-item"><span class="ai-icon">✅</span><span>Cloning <strong>your own
+                                            voice</strong> for creative, research, or accessibility projects.</span>
+                                </li>
+                                <li class="allow-item"><span class="ai-icon">✅</span><span>Educational demos and
+                                        <strong>AI research</strong> with proper attribution.</span></li>
+                                <li class="allow-item"><span class="ai-icon">✅</span><span>Voice preservation for people
+                                        with <strong>medical conditions</strong> affecting speech (with consent).</span>
+                                </li>
+                                <li class="allow-item"><span class="ai-icon">✅</span><span>Creative projects like
+                                        <strong>audiobooks, games, or films</strong> where all parties have given
+                                        consent.</span></li>
+                                <li class="allow-item"><span class="ai-icon">✅</span><span>Processing voices where
+                                        <strong>explicit written consent</strong> has been obtained from the voice
+                                        owner.</span></li>
+                            </ul>
+                        </div>
+
+                        <div
+                            style="margin-top:1rem;padding:.875rem 1rem;border-radius:10px;background:rgba(99,102,241,0.07);border:1px solid rgba(99,102,241,0.2);font-size:.8rem;color:var(--dim2);line-height:1.7">
+                            ⚖️ <strong style="color:var(--txt)">Legal Notice:</strong> Voice cloning technology may be
+                            subject to laws regarding consent, privacy, and impersonation in your jurisdiction. Users
+                            are solely responsible for ensuring their use complies with all applicable laws. This tool
+                            is provided for legitimate and ethical use only.
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- ══ ETHICS CONSENT MODAL ══ -->
+    <div class="modal-overlay" id="modal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <span class="modal-icon">🛡️</span>
+                <div class="modal-title">Ethical Use Agreement</div>
+                <div class="modal-subtitle">Please read and accept our ethical use policy before using VoiceQuest</div>
+            </div>
+            <div class="modal-body">
+                <ul class="modal-terms">
+                    <li><span>🚫</span> I will NOT clone anyone's voice without their explicit, informed consent.</li>
+                    <li><span>🚫</span> I will NOT use this tool to create deepfakes, spread misinformation, or
+                        impersonate real people.</li>
+                    <li><span>🚫</span> I will NOT use cloned voices for fraud, harassment, or any illegal activity.
+                    </li>
+                    <li><span>✅</span> I understand that I am solely responsible for how I use outputs from this tool.
+                    </li>
+                    <li><span>✅</span> I confirm this is for personal, educational, creative, or research purposes with
+                        full consent from all parties.</li>
+                    <li><span>⚖️</span> I acknowledge that voice cloning may be regulated by laws in my jurisdiction and
+                        I will comply with them.</li>
+                </ul>
+                <label class="modal-check">
+                    <input type="checkbox" id="agreeCheck"
+                        onchange="document.getElementById('acceptBtn').classList.toggle('ready',this.checked)">
+                    <span><strong>I have read and agree</strong> to the ethical use policy above. I will use VoiceQuest
+                        responsibly and only with proper consent.</span>
+                </label>
+                <button class="btn-accept" id="acceptBtn" onclick="acceptEthics()">✅ I Agree — Enter VoiceQuest</button>
             </div>
         </div>
     </div>
 
+    <!-- Toast -->
+    <div class="toast" id="toast">
+        <div class="toast-title">❌ Error</div>
+        <div id="toast-msg"></div>
+    </div>
+
     <script>
-        // ──────────────────────────────────────────────
-        // Guard: must be served via the FastAPI server
-        // ──────────────────────────────────────────────
-        if (window.location.protocol === 'file:') {
-            document.body.innerHTML = `
-            <div style="background:#0f172a;color:white;height:100vh;display:flex;flex-direction:column;
-                        align-items:center;justify-content:center;font-family:sans-serif;padding:20px;text-align:center;">
-                <h1 style="color:#ef4444;">⚠️ Open via Server</h1>
-                <p style="margin:20px 0;font-size:1.2rem;">You opened this file directly from disk.</p>
-                <p style="background:rgba(255,255,255,0.05);padding:15px;border-radius:8px;">
-                    Visit: <strong style="color:#6366f1;font-size:1.5rem;">http://localhost:8000</strong>
-                </p>
-            </div>`;
+        // ── Guard ──
+        if (location.protocol === 'file:') {
+            document.body.innerHTML = `<div style="background:#07091a;color:#fff;height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:sans-serif;text-align:center;padding:2rem"><h1 style="color:#ef4444;font-size:2rem;margin-bottom:1rem">⚠️ Open via Server</h1><p style="color:#94a3b8;font-size:1.1rem;margin-bottom:1.5rem">You opened this file directly. It must be served by FastAPI.</p><div style="background:rgba(255,255,255,.05);padding:1rem 2rem;border-radius:12px;font-size:1.3rem;color:#6366f1;font-weight:700">http://localhost:8000</div></div>`;
         }
 
-        // ──────────────────────────────────────────────
-        // State
-        // ──────────────────────────────────────────────
-        let mode = 'tts';           // 'tts' | 's2s'
-        let mimicryMode = 'smart';  // 'smart' | 'rvc'
+        // ── Ethics gate ──
+        function acceptEthics() {
+            if (!document.getElementById('agreeCheck').checked) return;
+            document.getElementById('modal').style.display = 'none';
+            localStorage.setItem('vq_ethics', '1');
+        }
+        window.addEventListener('DOMContentLoaded', () => {
+            if (localStorage.getItem('vq_ethics') === '1') document.getElementById('modal').style.display = 'none';
+        });
 
-        let files = {
-            ttsVoice: null,
-            smartTarget: null,
-            smartPerf: null,
-            rvcTarget: null,
-            rvcPerf: null
-        };
+        // ── State ──
+        let mode = 'tts';
+        let inputObjUrl = null;
+        const files = { tts: null, 'smart-t': null, 'smart-p': null, 'rvc-t': null, 'rvc-p': null };
 
-        let inputObjectUrl = null;
+        // ── Mode Switch ──
+        function setMode(m) {
+            mode = m;
+            ['tts', 'smart', 'rvc', 'guide'].forEach(id => {
+                document.getElementById('panel-' + id).style.display = id === m ? '' : 'none';
+                const nav = document.getElementById('nav-' + id);
+                if (nav) nav.classList.toggle('active', id === m);
+            });
+            if (m !== 'guide') document.getElementById('result-wrapper').style.display = 'none';
+        }
 
-        // ──────────────────────────────────────────────
-        // File handlers
-        // ──────────────────────────────────────────────
-        function handleFileSelect(event, slot) {
-            const file = event.target.files[0];
-            if (!file) return;
-            const nameMap = {
-                'tts': ['ttsVoice', 'fileNameTts'],
-                'smart-target': ['smartTarget', 'targetVoiceSmartName'],
-                'smart-perf': ['smartPerf', 'perfInputSmartName'],
-                'rvc-target': ['rvcTarget', 'fileNameRvc'],
-                'rvc-perf': ['rvcPerf', 'perfInputRvcName']
+        // ── File Select ──
+        function selectFile(e, slot) {
+            const f = e.target.files[0]; if (!f) return;
+            files[slot] = f;
+            setFileUI(slot, f.name);
+        }
+        function setFileUI(slot, name) {
+            const map = {
+                'tts': ['uz-tts', 'n-tts'],
+                'smart-t': ['uz-smart-t', 'n-smart-t'],
+                'smart-p': ['uz-smart-p', 'n-smart-p'],
+                'rvc-t': ['uz-rvc-t', 'n-rvc-t'],
+                'rvc-p': ['uz-rvc-p', 'n-rvc-p'],
             };
-            const [stateKey, labelId] = nameMap[slot];
-            files[stateKey] = file;
-            document.getElementById(labelId).textContent = '✅ ' + file.name;
+            const [zoneId, nameId] = map[slot];
+            document.getElementById(zoneId).classList.add('has-file');
+            document.getElementById(nameId).textContent = '✅ ' + name;
         }
 
-        // ──────────────────────────────────────────────
-        // Mode switching
-        // ──────────────────────────────────────────────
-        function setMode(newMode) {
-            mode = newMode;
-            const ttsToggle = document.getElementById('ttsToggle');
-            const s2sToggle = document.getElementById('s2sToggle');
-            const subModeBar = document.getElementById('subModeBar');
-            const ttsInfo = document.getElementById('ttsInfo');
-            const ttsSection = document.getElementById('ttsSection');
-
-            if (mode === 'tts') {
-                ttsToggle.style.background = 'var(--primary)';
-                ttsToggle.style.color = 'white';
-                s2sToggle.style.background = 'transparent';
-                s2sToggle.style.color = 'var(--text-dim)';
-
-                subModeBar.classList.remove('visible');
-                ttsInfo.classList.add('visible');
-                ttsSection.style.display = 'block';
-
-                document.getElementById('smartMimicSection').style.display = 'none';
-                document.getElementById('rvcMimicSection').style.display = 'none';
-                document.getElementById('smartMimicInfo').classList.remove('visible');
-                document.getElementById('rvcMimicInfo').classList.remove('visible');
-
-                document.getElementById('processBtn').textContent = '🗣 Clone Voice';
-            } else {
-                s2sToggle.style.background = 'var(--primary)';
-                s2sToggle.style.color = 'white';
-                ttsToggle.style.background = 'transparent';
-                ttsToggle.style.color = 'var(--text-dim)';
-
-                subModeBar.classList.add('visible');
-                ttsInfo.classList.remove('visible');
-                ttsSection.style.display = 'none';
-
-                setMimicryMode(mimicryMode);
-            }
-            document.getElementById('result').classList.remove('active');
-            document.getElementById('status').textContent = '';
+        // ── Drag & Drop ──
+        function dragOver(e, id) { e.preventDefault(); document.getElementById(id).classList.add('drag-over') }
+        function dragLeave(id) { document.getElementById(id).classList.remove('drag-over') }
+        function dropFile(e, slot) {
+            e.preventDefault();
+            const [zoneId] = getZoneInfo(slot);
+            document.getElementById(zoneId).classList.remove('drag-over');
+            const f = e.dataTransfer.files[0];
+            if (!f || !f.type.startsWith('audio/')) return showToast('Please drop an audio file.');
+            files[slot] = f;
+            setFileUI(slot, f.name);
+        }
+        function getZoneInfo(slot) {
+            return ({
+                'tts': ['uz-tts'], 'smart-t': ['uz-smart-t'], 'smart-p': ['uz-smart-p'],
+                'rvc-t': ['uz-rvc-t'], 'rvc-p': ['uz-rvc-p']
+            })[slot];
         }
 
-        function setMimicryMode(subMode) {
-            mimicryMode = subMode;
-            document.getElementById('smartMimicBtn').classList.toggle('active', subMode === 'smart');
-            document.getElementById('rvcMimicBtn').classList.toggle('active', subMode === 'rvc');
-
-            document.getElementById('smartMimicSection').style.display = subMode === 'smart' ? 'block' : 'none';
-            document.getElementById('rvcMimicSection').style.display = subMode === 'rvc' ? 'block' : 'none';
-            document.getElementById('smartMimicInfo').classList.toggle('visible', subMode === 'smart');
-            document.getElementById('rvcMimicInfo').classList.toggle('visible', subMode === 'rvc');
-
-            document.getElementById('processBtn').textContent =
-                subMode === 'smart' ? '🎭 Mimic Accent & Voice' : '🎛 Convert with RVC';
+        // ── Slider ──
+        function syncSlider(el, valId) {
+            const v = parseFloat(el.value), mn = parseFloat(el.min), mx = parseFloat(el.max);
+            const pct = ((v - mn) / (mx - mn)) * 100;
+            el.style.background = `linear-gradient(to right,var(--p) ${pct}%,rgba(255,255,255,.1) ${pct}%)`;
+            document.getElementById(valId).textContent = v.toFixed(2) + '×';
         }
 
-        // ──────────────────────────────────────────────
-        // Main process function
-        // ──────────────────────────────────────────────
-        async function processVoice() {
-            const btn = document.getElementById('processBtn');
-            const loader = document.getElementById('loader');
-            const status = document.getElementById('status');
-            const result = document.getElementById('result');
-            const audioPlayer = document.getElementById('audioPlayer');
-            const inputPlayer = document.getElementById('inputPlayer');
-            const transcribedDiv = document.getElementById('transcribedText');
-            const downloadBtn = document.getElementById('downloadBtn');
-            const inputCardLabel = document.getElementById('inputCardLabel');
-            const outputCardLabel = document.getElementById('outputCardLabel');
-            const resultLabel = document.getElementById('resultLabel');
+        // ── Steps (Smart Mimic) ──
+        function setStep(n) {
+            [1, 2, 3].forEach(i => {
+                const s = document.getElementById('s' + i);
+                if (!s) return;
+                s.className = 'step' + (i < n ? ' done' : i === n ? ' active' : '');
+                s.querySelector('.step-dot').textContent = i < n ? '✓' : i;
+            });
+            [1, 2].forEach(i => {
+                const l = document.getElementById('sl' + i);
+                if (l) l.className = 'step-line' + (i < n ? ' done' : '');
+            });
+        }
 
-            // ── Validation ──
-            if (mode === 'tts') {
-                if (!files.ttsVoice) { alert('Please upload a target voice audio file.'); return; }
-            } else if (mimicryMode === 'smart') {
-                if (!files.smartTarget) { alert('Please upload the target person\'s voice (Step ①).'); return; }
-                const typedText = document.getElementById('smartMimicText').value.trim();
-                if (!typedText && !files.smartPerf) {
-                    alert('Please either type what to say (② text box) or upload your performance audio.');
-                    return;
+        // ── Toast ──
+        let toastTimer;
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            document.getElementById('toast-msg').textContent = msg;
+            t.classList.add('show');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => t.classList.remove('show'), 4000);
+        }
+
+        // ── Main run ──
+        async function run() {
+            const btnId = 'btn-' + mode, spId = 'sp-' + mode;
+            const btn = document.getElementById(btnId);
+            const sp = document.getElementById(spId);
+
+            // Validate
+            if (mode === 'tts' && !files.tts) { showToast('Please upload a target voice file.'); return; }
+            if (mode === 'smart') {
+                if (!files['smart-t']) { showToast('Please upload the target person\'s voice (Step 1).'); return; }
+                if (!document.getElementById('smartText').value.trim() && !files['smart-p']) {
+                    showToast('Please type text to say OR upload your performance audio.'); return;
                 }
-            } else {
-                if (!files.rvcTarget) { alert('Please upload a target voice audio file.'); return; }
-                if (!files.rvcPerf) { alert('Please upload your performance audio.'); return; }
+            }
+            if (mode === 'rvc') {
+                if (!files['rvc-t']) { showToast('Please upload a target voice file.'); return; }
+                if (!files['rvc-p']) { showToast('Please upload your performance audio.'); return; }
             }
 
-            btn.disabled = true;
-            loader.style.display = 'block';
-            status.className = 'status-msg';
-            result.classList.remove('active');
+            btn.disabled = true; sp.style.display = 'block';
+            document.getElementById('result-wrapper').style.display = 'none';
+            if (mode === 'smart') setStep(2);
 
-            // Revoke previous object URL
-            if (inputObjectUrl) { URL.revokeObjectURL(inputObjectUrl); inputObjectUrl = null; }
+            if (inputObjUrl) { URL.revokeObjectURL(inputObjUrl); inputObjUrl = null; }
 
-            const formData = new FormData();
-            let endpoint = '';
-            let inputFileForPreview = null;
+            const fd = new FormData();
+            let endpoint = '', inFile = null;
 
             if (mode === 'tts') {
                 endpoint = '/process-voice';
-                formData.append('file', files.ttsVoice);
-                formData.append('accent', 'neutral');   // kept for back-compat
-                formData.append('tone', document.getElementById('tone').value);
-                formData.append('custom_text', document.getElementById('customText').value);
-                formData.append('language', document.getElementById('ttsLanguage').value);
-                formData.append('speed', document.getElementById('ttsSpeed').value);
-                inputFileForPreview = files.ttsVoice;
-                inputCardLabel.textContent = 'Target Voice (Input)';
-                outputCardLabel.textContent = 'Cloned Output';
-                resultLabel.textContent = '✅ Compare: Input → Cloned';
-                status.textContent = '⏳ Transcribing and synthesizing…';
-
-            } else if (mimicryMode === 'smart') {
-                const typedText = document.getElementById('smartMimicText').value.trim();
+                fd.append('file', files.tts);
+                fd.append('accent', 'neutral');
+                fd.append('tone', document.getElementById('tone').value);
+                fd.append('custom_text', document.getElementById('customText').value);
+                fd.append('language', document.getElementById('ttsLang').value);
+                fd.append('speed', document.getElementById('ttsSpeed').value);
+                inFile = files.tts;
+                document.getElementById('in-lbl').textContent = 'Reference Voice';
+                document.getElementById('out-lbl').textContent = 'Cloned Output';
+            } else if (mode === 'smart') {
                 endpoint = '/mimic-voice';
-                formData.append('target_voice_file', files.smartTarget);
-                formData.append('custom_text', typedText);
-                formData.append('language', document.getElementById('smartLanguage').value);
-                formData.append('speed', document.getElementById('smartSpeed').value);
-                if (files.smartPerf) {
-                    formData.append('performance_file', files.smartPerf);
-                }
-                // For input preview: show typed text in left card or the perf audio
-                inputFileForPreview = files.smartPerf || null;
-                inputCardLabel.textContent = typedText ? '② Typed Text (Input)' : '② Your Performance (Input)';
-                outputCardLabel.textContent = '✨ Mimic Output';
-                resultLabel.textContent = '✅ Compare: Input → Mimicked';
-                status.textContent = typedText
-                    ? '⏳ Synthesizing with target voice…'
-                    : '⏳ Transcribing your performance and re-synthesizing with target voice…';
-
+                const typedText = document.getElementById('smartText').value.trim();
+                fd.append('target_voice_file', files['smart-t']);
+                fd.append('custom_text', typedText);
+                fd.append('language', document.getElementById('smartLang').value);
+                fd.append('speed', document.getElementById('smartSpeed').value);
+                if (files['smart-p']) fd.append('performance_file', files['smart-p']);
+                inFile = files['smart-p'] || null;
+                document.getElementById('in-lbl').textContent = typedText ? 'Typed Text Input' : 'Your Performance';
+                document.getElementById('out-lbl').textContent = 'Mimic Output';
             } else {
                 endpoint = '/convert-voice';
-                formData.append('performance_file', files.rvcPerf);
-                formData.append('target_voice_file', files.rvcTarget);
-                formData.append('pitch_shift', document.getElementById('pitchShift').value);
-                formData.append('index_rate', document.getElementById('indexRate').value);
-                formData.append('filter_radius', document.getElementById('filterRadius').value);
-                formData.append('protect', document.getElementById('protect').value);
-                inputFileForPreview = files.rvcPerf;
-                inputCardLabel.textContent = 'Your Performance (Input)';
-                outputCardLabel.textContent = 'RVC Converted Output';
-                resultLabel.textContent = '✅ Compare: Performance → RVC Output';
-                status.textContent = '⏳ Running RVC voice conversion…';
+                fd.append('performance_file', files['rvc-p']);
+                fd.append('target_voice_file', files['rvc-t']);
+                fd.append('pitch_shift', document.getElementById('pitchShift').value);
+                fd.append('index_rate', document.getElementById('indexRate').value);
+                fd.append('filter_radius', document.getElementById('filterRadius').value);
+                fd.append('protect', document.getElementById('protect').value);
+                inFile = files['rvc-p'];
+                document.getElementById('in-lbl').textContent = 'Performance Input';
+                document.getElementById('out-lbl').textContent = 'RVC Converted';
             }
 
-            // Show input preview: use perf audio if available; skip if text-only
-            if (inputFileForPreview) {
-                inputObjectUrl = URL.createObjectURL(inputFileForPreview);
-                inputPlayer.src = inputObjectUrl;
-            } else {
-                // Text-only mode: hide the input player, show nothing
-                inputPlayer.src = '';
-                inputPlayer.style.display = 'none';
-            }
+            const inAudio = document.getElementById('audioIn');
+            if (inFile) { inputObjUrl = URL.createObjectURL(inFile); inAudio.src = inputObjUrl; inAudio.style.display = ''; }
+            else { inAudio.src = ''; inAudio.style.display = 'none'; }
 
             try {
-                const response = await fetch(endpoint, { method: 'POST', body: formData });
-
-                if (!response.ok) {
-                    const err = await response.json().catch(() => ({ detail: 'Unknown server error' }));
+                const res = await fetch(endpoint, { method: 'POST', body: fd });
+                if (!res.ok) {
+                    const err = await res.json().catch(() => ({ detail: 'Unknown server error' }));
                     throw new Error(err.detail || 'Processing failed');
                 }
+                const data = await res.json();
+                const url = (data.output_url || '').replace('/audio/output/', '/static/output/');
 
-                const data = await response.json();
-                const audioUrl = (data.output_url || '').replace('/audio/output/', '/static/output/');
+                document.getElementById('audioOut').src = url;
+                document.getElementById('dlBtn').href = url;
 
-                audioPlayer.src = audioUrl;
-                downloadBtn.href = audioUrl;
-                downloadBtn.download = 'voicequest_output.wav';
+                const tr = document.getElementById('transcript');
+                const txt = data.transcribed_text || data.text || data.model_used ? `${data.transcribed_text ? '📝 Transcribed: "' + data.transcribed_text + '"' : data.text ? '"' + data.text + '"' : '🎛 RVC Model: ' + data.model_used}` : '';
+                tr.textContent = txt; tr.style.display = txt ? '' : 'none';
 
-                // Show transcription or model info
-                if (data.transcribed_text) {
-                    transcribedDiv.textContent = '📝 Transcribed: "' + data.transcribed_text + '"';
-                } else if (data.text) {
-                    transcribedDiv.textContent = '"' + data.text + '"';
-                } else if (data.model_used) {
-                    transcribedDiv.textContent = 'RVC Model: ' + data.model_used;
-                } else {
-                    transcribedDiv.textContent = '';
-                }
+                if (mode === 'smart') setStep(3);
+                document.getElementById('result-wrapper').style.display = '';
 
-                result.classList.add('active');
-                // Restore the input player visibility in case it was hidden
-                inputPlayer.style.display = 'block';
-                status.textContent = '';
-
-            } catch (error) {
-                console.error(error);
-                status.className = 'status-msg error';
-                status.textContent = '❌ Error: ' + error.message;
+            } catch (err) {
+                showToast(err.message);
+                if (mode === 'smart') setStep(1);
             } finally {
-                btn.disabled = false;
-                loader.style.display = 'none';
+                btn.disabled = false; sp.style.display = 'none';
             }
         }
 
-        // ──────────────────────────────────────────────
-        // Slider helper — keeps track fill + value label in sync
-        // ──────────────────────────────────────────────
-        function updateSlider(sliderId, valId) {
-            const slider = document.getElementById(sliderId);
-            const val = parseFloat(slider.value);
-            document.getElementById(valId).textContent = val.toFixed(2) + '×';
-            // Update the gradient fill to reflect current position
-            const min = parseFloat(slider.min);
-            const max = parseFloat(slider.max);
-            const pct = ((val - min) / (max - min)) * 100;
-            slider.style.background =
-                `linear-gradient(to right, var(--primary) ${pct}%, rgba(255,255,255,0.1) ${pct}%)`;
-        }
-        // Initialise slider fills on page load
+        // ── Sliders init ──
         window.addEventListener('load', () => {
-            ['ttsSpeed', 'smartSpeed'].forEach(id => {
-                const el = document.getElementById(id);
-                if (el) updateSlider(id, id.replace('Speed', 'SpeedVal'));
+            document.querySelectorAll('input[type=range]').forEach(el => {
+                const valId = el.id.replace('Speed', 'SpeedVal');
+                if (document.getElementById(valId)) syncSlider(el, valId);
+                else syncSlider(el, el.id + 'Val');
             });
         });
     </script>
-
 </body>
 
 </html>
